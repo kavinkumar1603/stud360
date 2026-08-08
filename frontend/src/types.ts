@@ -78,7 +78,10 @@ export interface Student {
   roll_no: string;
   name: string;
   email: string;
+  phone?: string;
   department: string;
+  section?: string;
+  year?: string;
   semester: Semester;
   advisor_id: string;
   avatar?: string;
@@ -89,6 +92,7 @@ export interface Advisor {
   name: string;
   department: string;
   email: string;
+  phone?: string;
   title: string;
   avatar?: string;
 }
