@@ -23,7 +23,7 @@ export default function DashboardRoute({ params }: { params: Promise<{ id: strin
   const { isAuthenticated, isInitializing, role, currentStudent } = useApp();
   const router = useRouter();
 
-  const [activeTab, setActiveTab] = useState<NavTab>('student_dashboard');
+  const [activeTab, setActiveTab] = useState<NavTab>(role === 'ADVISOR' ? 'advisor_students' : 'student_dashboard');
   const [selectedOD, setSelectedOD] = useState<ODRequest | null>(null);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
 

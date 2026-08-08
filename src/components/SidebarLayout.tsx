@@ -114,8 +114,10 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({
               {role === 'STUDENT' ? 'Student Menu' : 'Student View Mode'}
             </div>
 
-            <button
-              id="nav-student-dashboard"
+            {role === 'STUDENT' && (
+              <>
+                <button
+                  id="nav-student-dashboard"
               onClick={() => handleNavClick('student_dashboard')}
               className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                 activeTab === 'student_dashboard'
@@ -127,9 +129,7 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({
               <span>Dashboard</span>
             </button>
 
-            {role === 'STUDENT' && (
-              <>
-                <button
+            <button
                   id="nav-student-requests"
                   onClick={() => handleNavClick('student_requests')}
                   className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
