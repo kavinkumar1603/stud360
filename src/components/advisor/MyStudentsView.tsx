@@ -84,7 +84,7 @@ export const MyStudentsView: React.FC<MyStudentsViewProps> = ({ onSelectStudent 
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-bold tracking-tight text-slate-900">My Advisees</h1>
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-600 text-white">42</span>
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-600 text-white">{myAssignedStudents.length}</span>
           </div>
           <p className="text-xs text-slate-500 font-medium mt-0.5 max-w-2xl">
             Monitor academic progress, attendance anomalies, and review pending on-duty requests for your assigned cohort.
