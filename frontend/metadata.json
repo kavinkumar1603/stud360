@@ -1,6 +1,0 @@
-{
-  "name": "Academic OD & Online Course Tracker",
-  "description": "Frontend portal for Academic On-Duty (OD) applications, online course tracking, and advisor approval workflows.",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}
