@@ -64,7 +64,7 @@ export const StudentProfileView: React.FC = () => {
               <span className="text-slate-500">Assigned Faculty Advisor</span>
               <span className="font-bold text-blue-600 flex items-center gap-1">
                 <ShieldCheck className="w-3.5 h-3.5" />
-                {advisor ? advisor.name : 'Dr. Sarah Jenkins'}
+                {advisor ? advisor.name : 'Unassigned'}
               </span>
             </div>
           </div>
