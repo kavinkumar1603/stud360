@@ -22,17 +22,8 @@ export const Header: React.FC = () => {
     resetToDefaultData
   } = useApp();
 
-  const ACADEMIC_YEARS: AcademicYear[] = ['2025-2026', '2024-2025', '2023-2024'];
-  const SEMESTERS: Semester[] = [
-    'Semester 1',
-    'Semester 2',
-    'Semester 3',
-    'Semester 4',
-    'Semester 5',
-    'Semester 6',
-    'Semester 7',
-    'Semester 8'
-  ];
+
+
 
   return (
     <header className="h-16 border-b border-[#E5E7EB] bg-white text-[#111827] sticky top-0 z-40 shadow-xs">
@@ -63,31 +54,13 @@ export const Header: React.FC = () => {
           <div className="hidden md:flex items-center gap-2">
             <span className="text-xs text-gray-400 font-semibold uppercase tracking-wider">Context:</span>
             <div className="flex items-center bg-gray-100/90 rounded-md p-0.5 border border-gray-200">
-              <select
-                id="header-academic-year"
-                value={academicYear}
-                onChange={(e) => setAcademicYear(e.target.value as AcademicYear)}
-                className="text-xs font-semibold bg-transparent border-none rounded px-2 py-1 text-gray-800 focus:outline-none cursor-pointer"
-              >
-                {ACADEMIC_YEARS.map((ay) => (
-                  <option key={ay} value={ay}>
-                    AY {ay}
-                  </option>
-                ))}
-              </select>
+              <span className="text-xs font-semibold px-2 py-1 text-gray-800">
+                AY {academicYear}
+              </span>
               <span className="text-gray-300 px-0.5">|</span>
-              <select
-                id="header-semester"
-                value={semester}
-                onChange={(e) => setSemester(e.target.value as Semester)}
-                className="text-xs font-semibold bg-transparent border-none rounded px-2 py-1 text-gray-800 focus:outline-none cursor-pointer"
-              >
-                {SEMESTERS.map((sem) => (
-                  <option key={sem} value={sem}>
-                    {sem}
-                  </option>
-                ))}
-              </select>
+              <span className="text-xs font-semibold px-2 py-1 text-gray-800">
+                {semester}
+              </span>
             </div>
           </div>
 

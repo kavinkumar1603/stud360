@@ -65,8 +65,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [role, setRole] = useState<UserRole>('STUDENT');
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isInitializing, setIsInitializing] = useState<boolean>(true);
-  const [academicYear, setAcademicYear] = useState<AcademicYear>('2025-2026');
-  const [semester, setSemester] = useState<Semester>('Semester 6');
+  const [academicYear, setAcademicYear] = useState<AcademicYear>('2026-2027');
+  const [semester, setSemester] = useState<Semester>('Semester V');
 
   const [students, setStudents] = useState<Student[]>([]);
   const [advisors, setAdvisors] = useState<Advisor[]>([]);

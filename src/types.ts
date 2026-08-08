@@ -1,15 +1,7 @@
 export type UserRole = 'STUDENT' | 'ADVISOR';
 
-export type AcademicYear = '2025-2026' | '2024-2025' | '2023-2024';
-export type Semester =
-  | 'Semester 1'
-  | 'Semester 2'
-  | 'Semester 3'
-  | 'Semester 4'
-  | 'Semester 5'
-  | 'Semester 6'
-  | 'Semester 7'
-  | 'Semester 8';
+export type AcademicYear = '2026-2027';
+export type Semester = 'Semester V';
 
 export type ODRequestType = 'Individual' | 'Team';
 

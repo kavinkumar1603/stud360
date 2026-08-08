@@ -276,30 +276,13 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({
             {/* Academic Context Selector Pill */}
             <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-full px-3 py-1.5 text-xs font-semibold text-slate-700">
               <Calendar className="w-3.5 h-3.5 text-slate-500" />
-              <select
-                id="topbar-academic-year"
-                value={academicYear}
-                onChange={(e) => setAcademicYear(e.target.value as AcademicYear)}
-                className="bg-transparent border-none text-xs font-semibold text-slate-800 focus:outline-none cursor-pointer"
-              >
-                <option value="2023-2024">AY 2023-24</option>
-                <option value="2024-2025">AY 2024-25</option>
-                <option value="2025-2026">AY 2025-26</option>
-              </select>
+              <span className="text-xs font-semibold text-slate-800">
+                AY {academicYear}
+              </span>
               <span className="text-slate-300">•</span>
-              <select
-                id="topbar-semester"
-                value={semester}
-                onChange={(e) => setSemester(e.target.value as Semester)}
-                className="bg-transparent border-none text-xs font-semibold text-slate-800 focus:outline-none cursor-pointer"
-              >
-                <option value="Semester 1">Fall Semester</option>
-                <option value="Semester 2">Spring Semester</option>
-                <option value="Semester 3">Semester 3</option>
-                <option value="Semester 4">Semester 4</option>
-                <option value="Semester 5">Semester 5</option>
-                <option value="Semester 6">Semester 6</option>
-              </select>
+              <span className="text-xs font-semibold text-slate-800">
+                {semester}
+              </span>
             </div>
           </div>
 

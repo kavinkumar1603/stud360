@@ -134,7 +134,7 @@ export const MyStudentsView: React.FC<MyStudentsViewProps> = ({ onSelectStudent 
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-xs bg-white">
-              {students
+              {myAssignedStudents
                 .filter((s) => {
                   if (searchQuery.trim() !== '') {
                     const q = searchQuery.toLowerCase();
