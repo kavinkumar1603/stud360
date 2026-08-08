@@ -13,6 +13,7 @@ import { MyStudentsView } from '@/components/advisor/MyStudentsView';
 import { PendingApprovalsView } from '@/components/advisor/PendingApprovalsView';
 import { StudentProfileAdvisorView } from '@/components/advisor/StudentProfileAdvisorView';
 import { ODDetailAdvisorView } from '@/components/advisor/ODDetailAdvisorView';
+import { AdvisorProfileView } from '@/components/advisor/AdvisorProfileView';
 import { ODRequest, Student } from '@/types';
 import { Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -110,7 +111,7 @@ export default function DashboardRoute({ params }: { params: Promise<{ id: strin
       ) : activeTab === 'student_courses' ? (
         <OnlineCoursesListView onOpenAddCourse={() => setIsAddCourseOpen(true)} />
       ) : activeTab === 'student_profile' ? (
-        <StudentProfileView />
+        role === 'ADVISOR' ? <AdvisorProfileView /> : <StudentProfileView />
       ) : activeTab === 'advisor_students' && role === 'ADVISOR' ? (
         <MyStudentsView onSelectStudent={(st) => setSelectedStudent(st)} />
       ) : activeTab === 'advisor_pending' && role === 'ADVISOR' ? (

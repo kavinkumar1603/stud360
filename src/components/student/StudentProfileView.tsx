@@ -7,6 +7,8 @@ import { User, Mail, GraduationCap, Building, ShieldCheck } from 'lucide-react';
 export const StudentProfileView: React.FC = () => {
   const { currentStudent, advisors, odRequests, onlineCourses } = useApp();
 
+  if (!currentStudent?.name) return null;
+
   const advisor = advisors.find((a) => a.id === currentStudent.advisor_id);
 
   const myODs = odRequests.filter(
