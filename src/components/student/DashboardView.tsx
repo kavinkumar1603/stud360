@@ -14,9 +14,9 @@ import {
   XCircle,
   Calendar,
   Sparkles,
-  ArrowRight,
   TrendingUp,
-  Award
+  Award,
+  Users
 } from 'lucide-react';
 
 interface DashboardViewProps {
@@ -32,7 +32,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onSelectODRequest,
   onNavigateTab
 }) => {
-  const { currentStudent, academicYear, semester, odRequests, onlineCourses } = useApp();
+  const { currentStudent, academicYear, semester, odRequests, onlineCourses, advisors } = useApp();
+
+  const myAdvisor = advisors.find((a) => a.id === currentStudent.advisor_id);
 
   // Filter student data scoped to current academic_year + semester
   const studentODs = odRequests.filter(
@@ -148,59 +150,40 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
         </div>
 
-        {/* Right 1-Col: Online Courses Dark Blue Card */}
-        <div className="bg-gradient-to-br from-blue-700 via-blue-800 to-indigo-900 text-white rounded-2xl p-6 shadow-md flex flex-col justify-between gap-4 relative overflow-hidden">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <BookOpen className="w-5 h-5 text-blue-200" />
-              <h2 className="text-base font-bold">Online Courses</h2>
-            </div>
-            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-white/20 text-white backdrop-blur-xs">
-              Active
-            </span>
-          </div>
-
-          {/* Donut Ring Progress */}
-          <div className="flex items-center gap-4 py-2">
-            <div className="relative w-20 h-20 shrink-0 flex items-center justify-center">
-              <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-                <path
-                  className="text-white/20"
-                  strokeWidth="3.5"
-                  stroke="currentColor"
-                  fill="none"
-                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                />
-                <path
-                  className="text-white"
-                  strokeDasharray="67, 100"
-                  strokeWidth="3.5"
-                  strokeLinecap="round"
-                  stroke="currentColor"
-                  fill="none"
-                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                />
-              </svg>
-              <div className="absolute text-center">
-                <span className="text-base font-bold block leading-tight">2/3</span>
+        {/* Right 1-Col: My Advisor Card (Horizontal Layout) */}
+        <div className="bg-gradient-to-br from-indigo-50 via-white to-purple-50 border border-indigo-100 rounded-2xl p-6 shadow-sm relative overflow-hidden flex flex-col justify-center h-full group">
+          {/* Decorative background flair */}
+          <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 rounded-full blur-2xl -translate-y-10 translate-x-10 transition-transform duration-700 group-hover:scale-150"></div>
+          
+          <div className="flex items-center gap-5 relative z-10">
+            {/* Avatar on the Left */}
+            <div className="w-20 h-20 shrink-0 rounded-full bg-white p-1 shadow-md border border-indigo-100">
+              <div className="w-full h-full rounded-full bg-indigo-100 flex items-center justify-center overflow-hidden">
+                {myAdvisor?.avatar ? (
+                  <img src={myAdvisor.avatar} alt="Advisor" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-2xl font-black text-indigo-500">
+                    {myAdvisor?.name?.charAt(0) || 'A'}
+                  </span>
+                )}
               </div>
             </div>
 
-            <div>
-              <p className="text-xs font-bold">Credits Earned</p>
-              <p className="text-[11px] text-blue-200">NPTEL / Coursera</p>
-            </div>
-          </div>
-
-          {/* Counters */}
-          <div className="grid grid-cols-2 gap-2 pt-2 border-t border-white/10 text-xs">
-            <div>
-              <span className="text-blue-200 text-[10px] uppercase font-bold block">In Progress</span>
-              <span className="text-lg font-bold">{countCoursesInProgress}</span>
-            </div>
-            <div>
-              <span className="text-blue-200 text-[10px] uppercase font-bold block">Completed</span>
-              <span className="text-lg font-bold">{countCoursesCompleted}</span>
+            {/* Details on the Right */}
+            <div className="flex flex-col text-left">
+              <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest mb-1 flex items-center gap-1">
+                <Users className="w-3 h-3" />
+                Advisor
+              </span>
+              <h2 className="text-lg font-extrabold text-slate-900 tracking-tight leading-tight">
+                {myAdvisor?.name || 'Unassigned'}
+              </h2>
+              <p className="text-xs font-semibold text-slate-600 mt-1">
+                {myAdvisor?.department || 'Department'}
+              </p>
+              <p className="text-[11px] text-slate-400 mt-0.5">
+                {myAdvisor?.title || 'Faculty'}
+              </p>
             </div>
           </div>
         </div>
