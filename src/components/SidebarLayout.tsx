@@ -24,6 +24,7 @@ export type NavTab =
   | 'student_requests'
   | 'student_courses'
   | 'student_profile'
+  | 'advisor_dashboard'
   | 'advisor_students'
   | 'advisor_pending';
 
@@ -178,6 +179,19 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({
                 <ShieldCheck className="w-3.5 h-3.5" />
                 <span>Advisor Admin Tools</span>
               </div>
+
+              <button
+                id="nav-advisor-dashboard"
+                onClick={() => handleNavClick('advisor_dashboard')}
+                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                  activeTab === 'advisor_dashboard'
+                    ? 'bg-amber-600 text-white shadow-sm font-bold'
+                    : 'text-slate-600 hover:bg-amber-50 hover:text-amber-900'
+                }`}
+              >
+                <LayoutDashboard className={`w-4 h-4 ${activeTab === 'advisor_dashboard' ? 'text-white' : 'text-amber-500'}`} />
+                <span>Advisor Dashboard</span>
+              </button>
 
               <button
                 id="nav-advisor-students"

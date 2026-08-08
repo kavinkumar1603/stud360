@@ -14,6 +14,7 @@ import { PendingApprovalsView } from '@/components/advisor/PendingApprovalsView'
 import { StudentProfileAdvisorView } from '@/components/advisor/StudentProfileAdvisorView';
 import { ODDetailAdvisorView } from '@/components/advisor/ODDetailAdvisorView';
 import { AdvisorProfileView } from '@/components/advisor/AdvisorProfileView';
+import { AdvisorDashboardView } from '@/components/advisor/AdvisorDashboardView';
 import { ODRequest, Student } from '@/types';
 import { Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -23,7 +24,7 @@ export default function DashboardRoute({ params }: { params: Promise<{ id: strin
   const { isAuthenticated, isInitializing, role, currentStudent } = useApp();
   const router = useRouter();
 
-  const [activeTab, setActiveTab] = useState<NavTab>(role === 'ADVISOR' ? 'advisor_students' : 'student_dashboard');
+  const [activeTab, setActiveTab] = useState<NavTab>(role === 'ADVISOR' ? 'advisor_dashboard' : 'student_dashboard');
   const [selectedOD, setSelectedOD] = useState<ODRequest | null>(null);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
 
@@ -50,9 +51,11 @@ export default function DashboardRoute({ params }: { params: Promise<{ id: strin
     }
   }, [isInitializing, isAuthenticated, role, currentStudent, id, router]);
 
-  useEffect(() => {
-    if (role === 'STUDENT' && (activeTab === 'advisor_students' || activeTab === 'advisor_pending')) {
+    useEffect(() => {
+    if (role === 'STUDENT' && (activeTab === 'advisor_dashboard' || activeTab === 'advisor_students' || activeTab === 'advisor_pending')) {
       setActiveTab('student_dashboard');
+    } else if (role === 'ADVISOR' && (activeTab === 'student_dashboard' || activeTab === 'student_requests' || activeTab === 'student_courses')) {
+      setActiveTab('advisor_dashboard');
     }
   }, [role, activeTab]);
 
@@ -112,6 +115,14 @@ export default function DashboardRoute({ params }: { params: Promise<{ id: strin
         <OnlineCoursesListView onOpenAddCourse={() => setIsAddCourseOpen(true)} />
       ) : activeTab === 'student_profile' ? (
         role === 'ADVISOR' ? <AdvisorProfileView /> : <StudentProfileView />
+      ) : activeTab === 'advisor_dashboard' && role === 'ADVISOR' ? (
+        <AdvisorDashboardView
+          onSelectODRequest={(od) => setSelectedOD(od)}
+          onNavigateTab={(tab) => {
+            if (tab === 'requests') setActiveTab('advisor_pending');
+            if (tab === 'students') setActiveTab('advisor_students');
+          }}
+        />
       ) : activeTab === 'advisor_students' && role === 'ADVISOR' ? (
         <MyStudentsView onSelectStudent={(st) => setSelectedStudent(st)} />
       ) : activeTab === 'advisor_pending' && role === 'ADVISOR' ? (
