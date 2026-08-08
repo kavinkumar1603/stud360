@@ -15,7 +15,7 @@ export const StudentProfileView: React.FC = () => {
     (od) => od.student_id === currentStudent.id || od.team_members.some((m) => m.student_id === currentStudent.id)
   );
 
-  const myCourses = onlineCourses.filter((c) => c.student_id === currentStudent.id);
+  const myApprovedODs = myODs.filter((od) => od.od_final_status === 'APPROVED');
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
@@ -85,9 +85,9 @@ export const StudentProfileView: React.FC = () => {
               <div className="text-[11px] font-semibold text-slate-500">Total OD Applied</div>
             </div>
 
-            <div className="p-3 bg-sky-50/50 rounded-xl border border-sky-100">
-              <div className="text-xl font-black text-sky-600">{myCourses.length}</div>
-              <div className="text-[11px] font-semibold text-slate-500">Courses Logged</div>
+            <div className="p-3 bg-teal-50/50 rounded-xl border border-teal-100">
+              <div className="text-xl font-black text-teal-600">{myApprovedODs.length}</div>
+              <div className="text-[11px] font-semibold text-slate-500">Approved ODs</div>
             </div>
           </div>
         </div>

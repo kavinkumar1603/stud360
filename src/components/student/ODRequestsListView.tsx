@@ -311,21 +311,7 @@ export const ODRequestsListView: React.FC<ODRequestsListViewProps> = ({
           </div>
         )}
 
-        {/* Footer Pagination Bar (Matching Image 3) */}
-        <div className="p-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-          <span>Showing 1 to {filteredODs.length} of {myODs.length} requests</span>
-          <div className="flex items-center gap-1">
-            <button className="p-1 rounded border border-slate-200 hover:bg-slate-50 disabled:opacity-50">
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <button className="px-3 py-1 rounded font-bold bg-blue-600 text-white">1</button>
-            <button className="px-3 py-1 rounded font-bold text-slate-600 hover:bg-slate-100">2</button>
-            <button className="px-3 py-1 rounded font-bold text-slate-600 hover:bg-slate-100">3</button>
-            <button className="p-1 rounded border border-slate-200 hover:bg-slate-50">
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
+
 
       </div>
 

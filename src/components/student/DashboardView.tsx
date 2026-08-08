@@ -293,17 +293,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </div>
           </div>
 
-          {/* Explore Electives Card */}
-          <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white rounded-2xl p-5 shadow-sm relative overflow-hidden flex items-center justify-between">
-            <div className="space-y-1 relative z-10">
-              <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider block">
-                Catalog Available
-              </span>
-              <h3 className="text-sm font-bold">Explore Electives</h3>
-              <p className="text-[11px] text-slate-300">Spring 2024 Course Catalog →</p>
-            </div>
-            <Sparkles className="w-8 h-8 text-indigo-400 opacity-60" />
-          </div>
+
         </div>
 
       </div>
