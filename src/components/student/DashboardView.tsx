@@ -109,12 +109,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               </p>
             </div>
 
-            <div className="text-right shrink-0">
-              <span className="text-3xl font-extrabold text-slate-900">{studentODs.length}</span>
-              <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider">
-                Total Semester
-              </span>
-            </div>
+            
           </div>
 
           {/* 3 Status Stat Boxes */}
