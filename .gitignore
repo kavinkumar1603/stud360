@@ -6,3 +6,6 @@ coverage/
 *.log
 .env*
 !.env.example
+/backend/node_modules
+/backend/.env
+/frontend/.env
