@@ -25,6 +25,7 @@ interface AppContextType {
   role: UserRole;
   setRole: (role: UserRole) => void;
   isAuthenticated: boolean;
+  isInitializing: boolean;
   login: (userId: string, targetRole: UserRole) => void;
   logout: () => void;
   academicYear: AcademicYear;
@@ -62,7 +63,8 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [role, setRole] = useState<UserRole>('STUDENT');
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(true);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [isInitializing, setIsInitializing] = useState<boolean>(true);
   const [academicYear, setAcademicYear] = useState<AcademicYear>('2025-2026');
   const [semester, setSemester] = useState<Semester>('Semester 6');
 
@@ -91,10 +93,38 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (odData) setOdRequests(odData);
         if (coursesData) setOnlineCourses(coursesData);
         
-        if (studentsData && studentsData.length > 0) setCurrentStudent(studentsData[0]);
-        if (advisorsData && advisorsData.length > 0) setCurrentAdvisor(advisorsData[0]);
+                let storedUserId = localStorage.getItem('userId');
+        let storedUserRole = localStorage.getItem('userRole');
+
+        // Fallback for older sessions: decode the JWT token directly
+        const token = localStorage.getItem('token');
+        if (token && (!storedUserId || !storedUserRole)) {
+          try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            storedUserId = payload.id;
+            storedUserRole = payload.role;
+            localStorage.setItem('userId', payload.id);
+            localStorage.setItem('userRole', payload.role);
+          } catch (e) {
+            console.error('Failed to decode token payload:', e);
+          }
+        }
+
+        if (storedUserId && storedUserRole) {
+          setRole(storedUserRole as any);
+          if (storedUserRole === 'STUDENT') {
+            const found = studentsData?.find((s) => s.id === storedUserId);
+            if (found) setCurrentStudent(found);
+          } else {
+            const found = advisorsData?.find((a) => a.id === storedUserId);
+            if (found) setCurrentAdvisor(found);
+          }
+          setIsAuthenticated(true);
+        }
       } catch (err) {
         console.error("Error fetching data from Supabase:", err);
+      } finally {
+        setIsInitializing(false);
       }
     };
     fetchData();
@@ -112,8 +142,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setIsAuthenticated(true);
   };
 
-  const logout = () => {
+    const logout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('userRole');
     setIsAuthenticated(false);
+    window.location.href = '/';
   };
 
   const addToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
@@ -279,6 +313,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         role,
         setRole,
         isAuthenticated,
+        isInitializing,
         login,
         logout,
         academicYear,

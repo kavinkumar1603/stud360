@@ -1,10 +1,12 @@
 'use client';
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
+import { useRouter } from 'next/navigation';
 import { GraduationCap, Lock, Mail, ArrowRight, AlertCircle, Sparkles, CheckCircle2 } from 'lucide-react';
 
 export const LoginPage: React.FC = () => {
   const { login, students, advisors, addToast } = useApp();
+  const router = useRouter();
 
   const [credential, setCredential] = useState('');
   const [password, setPassword] = useState('');
@@ -38,12 +40,21 @@ export const LoginPage: React.FC = () => {
 
       // Store JWT token (in production this could be an HttpOnly cookie or secure storage)
       localStorage.setItem('token', data.token);
+      localStorage.setItem('userId', data.user.id);
+      localStorage.setItem('userRole', data.user.role);
 
       // Login using the context
       login(data.user.id, data.user.role);
       
       const roleName = data.user.role === 'STUDENT' ? 'Student' : 'Faculty Advisor';
       addToast(`Logged in as ${roleName} (${data.user.name})`, 'success');
+      
+      // Navigate to the dynamic route
+      if (data.user.role === 'STUDENT') {
+        router.push(`/${data.user.roll_no.toLowerCase()}`);
+      } else {
+        router.push('/advisor');
+      }
     } catch (error) {
       console.error('Login request failed:', error);
       setErrorMessage('Failed to connect to the server. Please ensure the backend is running.');
@@ -98,6 +109,7 @@ export const LoginPage: React.FC = () => {
                   id="input-login-credential"
                   type="text"
                   required
+                  suppressHydrationWarning
                   value={credential}
                   onChange={(e) => {
                     setCredential(e.target.value);
@@ -125,6 +137,7 @@ export const LoginPage: React.FC = () => {
                   id="input-login-password"
                   type="password"
                   required
+                  suppressHydrationWarning
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
@@ -137,6 +150,7 @@ export const LoginPage: React.FC = () => {
             <button
               type="submit"
               id="btn-login-submit"
+              suppressHydrationWarning
               className="w-full py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98 mt-2"
             >
               <span>Sign In</span>
