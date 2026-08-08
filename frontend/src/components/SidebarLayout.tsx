@@ -220,14 +220,14 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({
         <div className="p-4 border-t border-slate-100 bg-slate-50 space-y-3">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-full bg-blue-100 text-blue-700 font-bold text-xs flex items-center justify-center shrink-0">
-              {role === 'STUDENT' ? currentStudent.name.split(' ').map(n=>n[0]).join('') : 'RV'}
+              {role === 'STUDENT' ? currentStudent.name?.split(' ').map(n=>n[0]).join('') || 'S' : 'RV'}
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-xs font-bold text-slate-900 truncate">
-                {role === 'STUDENT' ? currentStudent.name : currentAdvisor.name}
+                {role === 'STUDENT' ? currentStudent.name || 'Loading...' : currentAdvisor.name || 'Loading...'}
               </p>
               <p className="text-[11px] text-slate-500 truncate">
-                {role === 'STUDENT' ? currentStudent.roll_no : `${currentAdvisor.department} Advisor`}
+                {role === 'STUDENT' ? currentStudent.roll_no || '' : `${currentAdvisor.department || ''} Advisor`}
               </p>
             </div>
           </div>
@@ -294,14 +294,14 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({
             <div className="hidden sm:flex items-center gap-2 text-right">
               <div>
                 <p className="text-xs font-bold text-slate-900">
-                  {role === 'STUDENT' ? currentStudent.name : currentAdvisor.name}
+                  {role === 'STUDENT' ? currentStudent.name || 'Loading...' : currentAdvisor.name || 'Loading...'}
                 </p>
                 <p className="text-[10px] text-slate-500 font-medium">
-                  {role === 'STUDENT' ? `Student • ${currentStudent.department}` : `Senior Faculty Advisor`}
+                  {role === 'STUDENT' ? `Student • ${currentStudent.department || ''}` : `Senior Faculty Advisor`}
                 </p>
               </div>
               <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xs shadow-xs">
-                {role === 'STUDENT' ? currentStudent.name[0] : 'R'}
+                {role === 'STUDENT' ? currentStudent.name?.[0] || 'S' : 'R'}
               </div>
             </div>
 

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { INITIAL_OD_REQUESTS, INITIAL_ONLINE_COURSES, MOCK_ADVISORS, MOCK_STUDENTS } from '../data/mockData';
+import { supabase } from '../utils/supabase';
 import {
   AcademicYear,
   Advisor,
@@ -60,22 +60,43 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [role, setRole] = useState<UserRole>('STUDENT');
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    const saved = localStorage.getItem('academic_is_auth');
-    return saved !== null ? JSON.parse(saved) : true; // default logged in for seamless demo
-  });
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(true);
   const [academicYear, setAcademicYear] = useState<AcademicYear>('2025-2026');
   const [semester, setSemester] = useState<Semester>('Semester 6');
 
-  const [students] = useState<Student[]>(MOCK_STUDENTS);
-  const [advisors] = useState<Advisor[]>(MOCK_ADVISORS);
+  const [students, setStudents] = useState<Student[]>([]);
+  const [advisors, setAdvisors] = useState<Advisor[]>([]);
 
-  const [currentStudent, setCurrentStudent] = useState<Student>(MOCK_STUDENTS[0]);
-  const [currentAdvisor, setCurrentAdvisor] = useState<Advisor>(MOCK_ADVISORS[0]);
+  // Use empty objects casted to the types to prevent null pointer exceptions before data loads
+  const [currentStudent, setCurrentStudent] = useState<Student>({} as Student);
+  const [currentAdvisor, setCurrentAdvisor] = useState<Advisor>({} as Advisor);
 
+  const [odRequests, setOdRequests] = useState<ODRequest[]>([]);
+  const [onlineCourses, setOnlineCourses] = useState<OnlineCourse[]>([]);
+  const [toasts, setToasts] = useState<ToastMessage[]>([]);
+
+  // Fetch data from Supabase on mount
   useEffect(() => {
-    localStorage.setItem('academic_is_auth', JSON.stringify(isAuthenticated));
-  }, [isAuthenticated]);
+    const fetchData = async () => {
+      try {
+        const { data: studentsData } = await supabase.from('students').select('*');
+        const { data: advisorsData } = await supabase.from('advisors').select('*');
+        const { data: odData } = await supabase.from('od_requests').select('*').order('created_at', { ascending: false });
+        const { data: coursesData } = await supabase.from('online_courses').select('*').order('created_at', { ascending: false });
+        
+        if (studentsData) setStudents(studentsData);
+        if (advisorsData) setAdvisors(advisorsData);
+        if (odData) setOdRequests(odData);
+        if (coursesData) setOnlineCourses(coursesData);
+        
+        if (studentsData && studentsData.length > 0) setCurrentStudent(studentsData[0]);
+        if (advisorsData && advisorsData.length > 0) setCurrentAdvisor(advisorsData[0]);
+      } catch (err) {
+        console.error("Error fetching data from Supabase:", err);
+      }
+    };
+    fetchData();
+  }, []);
 
   const login = (userId: string, targetRole: UserRole) => {
     setRole(targetRole);
@@ -93,26 +114,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setIsAuthenticated(false);
   };
 
-  const [odRequests, setOdRequests] = useState<ODRequest[]>(() => {
-    const saved = localStorage.getItem('academic_od_requests');
-    return saved ? JSON.parse(saved) : INITIAL_OD_REQUESTS;
-  });
-
-  const [onlineCourses, setOnlineCourses] = useState<OnlineCourse[]>(() => {
-    const saved = localStorage.getItem('academic_online_courses');
-    return saved ? JSON.parse(saved) : INITIAL_ONLINE_COURSES;
-  });
-
-  const [toasts, setToasts] = useState<ToastMessage[]>([]);
-
-  useEffect(() => {
-    localStorage.setItem('academic_od_requests', JSON.stringify(odRequests));
-  }, [odRequests]);
-
-  useEffect(() => {
-    localStorage.setItem('academic_online_courses', JSON.stringify(onlineCourses));
-  }, [onlineCourses]);
-
   const addToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
     const id = Date.now().toString() + Math.random().toString(36).substring(2, 5);
     setToasts((prev) => [...prev, { id, message, type }]);
@@ -127,15 +128,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const resetToDefaultData = () => {
-    setOdRequests(INITIAL_OD_REQUESTS);
-    setOnlineCourses(INITIAL_ONLINE_COURSES);
-    localStorage.removeItem('academic_od_requests');
-    localStorage.removeItem('academic_online_courses');
-    addToast('Demo data reset to initial default state', 'info');
+    addToast('Reset data is disabled while using Supabase.', 'info');
   };
 
-  // 2.3 Submit OD Request
-  const addODRequest = (data: {
+  const addODRequest = async (data: {
     event_name: string;
     description?: string;
     from_date: string;
@@ -143,8 +139,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     request_type: ODRequestType;
     team_members: Array<{ student_id: string; roll_no: string; name: string }>;
   }) => {
-    const newRequest: ODRequest = {
-      id: `od-${Date.now().toString().slice(-4)}`,
+    if (!currentStudent.id) return;
+    
+    const newRequest = {
       student_id: currentStudent.id,
       student_name: currentStudent.name,
       student_roll: currentStudent.roll_no,
@@ -162,161 +159,116 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       })),
       advisor_status: 'PENDING',
       od_final_status: 'PENDING',
-      my_individual_proof_status: 'LOCKED',
-      created_at: new Date().toISOString().split('T')[0]
+      my_individual_proof_status: 'LOCKED'
     };
 
-    setOdRequests((prev) => [newRequest, ...prev]);
-    addToast('Sent to your advisor for approval', 'success');
+    const { data: inserted, error } = await supabase.from('od_requests').insert(newRequest).select().single();
+    if (error) {
+      addToast('Error saving OD request', 'error');
+      console.error(error);
+    } else if (inserted) {
+      setOdRequests((prev) => [inserted, ...prev]);
+      addToast('Sent to your advisor for approval', 'success');
+    }
   };
 
-  // 2.5 Submit Proof (Student) with optimistic flip to SUBMITTED
   const updateODRequestProof = async (odId: string, driveLink: string, remarks?: string) => {
-    setOdRequests((prev) =>
-      prev.map((od) => {
-        if (od.id !== odId) return od;
+    const od = odRequests.find(r => r.id === odId);
+    if (!od) return;
+    
+    let updates: any = {};
+    if (od.student_id === currentStudent.id) {
+      updates = { my_proof_link: driveLink, my_proof_remarks: remarks, my_individual_proof_status: 'SUBMITTED' };
+    } else {
+      const updatedMembers = od.team_members.map((m) => m.student_id === currentStudent.id ? { ...m, drive_link: driveLink, remarks, individual_proof_status: 'SUBMITTED' } : m);
+      updates = { team_members: updatedMembers };
+    }
 
-        // If I am the main requester
-        if (od.student_id === currentStudent.id) {
-          return {
-            ...od,
-            my_proof_link: driveLink,
-            my_proof_remarks: remarks,
-            my_individual_proof_status: 'SUBMITTED'
-          };
-        }
-
-        // If I am a team member
-        const isTeamMember = od.team_members.some((m) => m.student_id === currentStudent.id);
-        if (isTeamMember) {
-          return {
-            ...od,
-            team_members: od.team_members.map((m) =>
-              m.student_id === currentStudent.id
-                ? {
-                    ...m,
-                    drive_link: driveLink,
-                    remarks: remarks,
-                    individual_proof_status: 'SUBMITTED'
-                  }
-                : m
-            )
-          };
-        }
-
-        return od;
-      })
-    );
-    addToast('Proof submitted — Awaiting verification', 'success');
+    const { data: updated, error } = await supabase.from('od_requests').update(updates).eq('id', odId).select().single();
+    if (!error && updated) {
+      setOdRequests(prev => prev.map(r => r.id === odId ? updated : r));
+      addToast('Proof submitted — Awaiting verification', 'success');
+    } else {
+      addToast('Error submitting proof', 'error');
+    }
   };
 
-  // 3.5 Advisor Approve / Reject OD Request
   const advisorReviewOD = async (odId: string, status: AdvisorStatus, remarks?: string) => {
-    setOdRequests((prev) =>
-      prev.map((od) => {
-        if (od.id !== odId) return od;
+    const od = odRequests.find(r => r.id === odId);
+    if (!od) return;
 
-        // If advisor approves, check if final OD status unlocks proof upload or is auto-approved/pending
-        const newAdvisorStatus = status;
-        // In our academic flow: when advisor approves, od_final_status transitions to APPROVED (or PENDING if secondary level exists).
-        // If advisor approves, let's set od_final_status to 'APPROVED' so proof unlocks immediately for testing!
-        const newFinalStatus = status === 'APPROVED' ? 'APPROVED' : 'REJECTED';
+    const newFinalStatus = status === 'APPROVED' ? 'APPROVED' : 'REJECTED';
+    const updatedMyProofStatus = newFinalStatus === 'APPROVED' ? (od.my_proof_link ? 'SUBMITTED' : 'OPEN') : 'LOCKED';
+    const updatedTeamMembers = od.team_members.map((m) => ({
+      ...m,
+      individual_proof_status: (newFinalStatus === 'APPROVED' ? (m.drive_link ? 'SUBMITTED' : 'OPEN') : 'LOCKED') as ProofStatus
+    }));
 
-        const updatedMyProofStatus: ProofStatus =
-          newFinalStatus === 'APPROVED' ? (od.my_proof_link ? 'SUBMITTED' : 'OPEN') : 'LOCKED';
+    const updates = {
+      advisor_status: status,
+      od_final_status: newFinalStatus,
+      advisor_remarks: remarks,
+      my_individual_proof_status: updatedMyProofStatus,
+      team_members: updatedTeamMembers
+    };
 
-        const updatedTeamMembers = od.team_members.map((m) => ({
-          ...m,
-          individual_proof_status: (newFinalStatus === 'APPROVED'
-            ? m.drive_link
-              ? 'SUBMITTED'
-              : 'OPEN'
-            : 'LOCKED') as ProofStatus
-        }));
-
-        return {
-          ...od,
-          advisor_status: newAdvisorStatus,
-          od_final_status: newFinalStatus,
-          advisor_remarks: remarks,
-          my_individual_proof_status: updatedMyProofStatus,
-          team_members: updatedTeamMembers
-        };
-      })
-    );
-
-    if (status === 'APPROVED') {
-      addToast('OD Request Approved successfully', 'success');
+    const { data: updated, error } = await supabase.from('od_requests').update(updates).eq('id', odId).select().single();
+    if (!error && updated) {
+      setOdRequests(prev => prev.map(r => r.id === odId ? updated : r));
+      addToast(status === 'APPROVED' ? 'OD Request Approved successfully' : 'OD Request Rejected', status === 'APPROVED' ? 'success' : 'info');
     } else {
-      addToast('OD Request Rejected', 'info');
+      addToast('Error reviewing OD request', 'error');
     }
   };
 
-  // 3.5 Advisor Verify / Reject Individual Proof per-member
   const advisorVerifyProof = async (odId: string, memberStudentId: string, newStatus: 'VERIFIED' | 'REJECTED') => {
-    setOdRequests((prev) =>
-      prev.map((od) => {
-        if (od.id !== odId) return od;
+    const od = odRequests.find(r => r.id === odId);
+    if (!od) return;
 
-        // If it's the main student
-        if (od.student_id === memberStudentId) {
-          return {
-            ...od,
-            my_individual_proof_status: newStatus
-          };
-        }
-
-        // If it's a team member
-        return {
-          ...od,
-          team_members: od.team_members.map((m) =>
-            m.student_id === memberStudentId
-              ? {
-                  ...m,
-                  individual_proof_status: newStatus
-                }
-              : m
-          )
-        };
-      })
-    );
-
-    if (newStatus === 'VERIFIED') {
-      addToast('Proof verified and marked complete', 'success');
+    let updates: any = {};
+    if (od.student_id === memberStudentId) {
+      updates = { my_individual_proof_status: newStatus };
     } else {
-      addToast('Proof rejected — student requested to resubmit', 'info');
+      updates = { team_members: od.team_members.map(m => m.student_id === memberStudentId ? { ...m, individual_proof_status: newStatus } : m) };
+    }
+
+    const { data: updated, error } = await supabase.from('od_requests').update(updates).eq('id', odId).select().single();
+    if (!error && updated) {
+      setOdRequests(prev => prev.map(r => r.id === odId ? updated : r));
+      addToast(newStatus === 'VERIFIED' ? 'Proof verified and marked complete' : 'Proof rejected — student requested to resubmit', newStatus === 'VERIFIED' ? 'success' : 'info');
     }
   };
 
-  // 2.6 Add Online Course
-  const addOnlineCourse = (
-    data: Omit<
-      OnlineCourse,
-      'id' | 'student_id' | 'student_name' | 'student_roll' | 'academic_year' | 'semester' | 'verified_by_advisor' | 'created_at'
-    >
+  const addOnlineCourse = async (
+    data: Omit<OnlineCourse, 'id' | 'student_id' | 'student_name' | 'student_roll' | 'academic_year' | 'semester' | 'verified_by_advisor' | 'created_at'>
   ) => {
-    const newCourse: OnlineCourse = {
+    if (!currentStudent.id) return;
+    
+    const newCourse = {
       ...data,
-      id: `crs-${Date.now().toString().slice(-4)}`,
       student_id: currentStudent.id,
       student_name: currentStudent.name,
       student_roll: currentStudent.roll_no,
       academic_year: academicYear,
       semester: semester,
-      verified_by_advisor: false,
-      created_at: new Date().toISOString().split('T')[0]
+      verified_by_advisor: false
     };
 
-    setOnlineCourses((prev) => [newCourse, ...prev]);
-    addToast('Course added', 'success');
+    const { data: inserted, error } = await supabase.from('online_courses').insert(newCourse).select().single();
+    if (!error && inserted) {
+      setOnlineCourses(prev => [inserted, ...prev]);
+      addToast('Course added', 'success');
+    } else {
+      addToast('Error saving course', 'error');
+    }
   };
 
-  // 3.6 Toggle Course Verification
-  const toggleCourseVerify = (courseId: string, verified: boolean) => {
-    setOnlineCourses((prev) =>
-      prev.map((c) => (c.id === courseId ? { ...c, verified_by_advisor: verified } : c))
-    );
-    addToast(verified ? 'Course marked as Verified ✓' : 'Course verification removed', 'info');
+  const toggleCourseVerify = async (courseId: string, verified: boolean) => {
+    const { data: updated, error } = await supabase.from('online_courses').update({ verified_by_advisor: verified }).eq('id', courseId).select().single();
+    if (!error && updated) {
+      setOnlineCourses(prev => prev.map(c => c.id === courseId ? updated : c));
+      addToast(verified ? 'Course marked as Verified ✓' : 'Course verification removed', 'info');
+    }
   };
 
   return (
