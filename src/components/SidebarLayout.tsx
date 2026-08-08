@@ -307,37 +307,6 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({
               </div>
             </div>
 
-            {/* Quick Account Switcher dropdown inside current role */}
-            {role === 'STUDENT' ? (
-              <select
-                id="select-topbar-student"
-                value={currentStudent.id}
-                onChange={(e) => {
-                  const s = students.find((st) => st.id === e.target.value);
-                  if (s) setCurrentStudent(s);
-                }}
-                className="text-xs bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-800 font-semibold rounded-lg px-2.5 py-1.5 focus:outline-none cursor-pointer"
-              >
-                {students.map((st) => (
-                  <option key={st.id} value={st.id}>{st.name}</option>
-                ))}
-              </select>
-            ) : (
-              <select
-                id="select-topbar-advisor"
-                value={currentAdvisor.id}
-                onChange={(e) => {
-                  const a = advisors.find((adv) => adv.id === e.target.value);
-                  if (a) setCurrentAdvisor(a);
-                }}
-                className="text-xs bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-800 font-semibold rounded-lg px-2.5 py-1.5 focus:outline-none cursor-pointer"
-              >
-                {advisors.map((adv) => (
-                  <option key={adv.id} value={adv.id}>{adv.name}</option>
-                ))}
-              </select>
-            )}
-
             {/* Reset Data */}
             <button
               onClick={resetToDefaultData}
