@@ -77,7 +77,9 @@ export const Header: React.FC = () => {
             <div className="w-px h-4 bg-gray-300 mx-1"></div>
             <button
               onClick={() => {
-                localStorage.removeItem('token');
+                sessionStorage.removeItem('token');
+                sessionStorage.removeItem('userId');
+                sessionStorage.removeItem('userRole');
                 window.location.reload();
               }}
               className="text-xs font-semibold text-red-600 hover:text-red-700 transition-colors"
@@ -85,7 +87,6 @@ export const Header: React.FC = () => {
               Sign Out
             </button>
           </div>
-
         </div>
       </div>
     </header>

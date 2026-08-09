@@ -23,8 +23,8 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({ isOpen, onClos
     email: '',
     department: 'B.E CSE',
     section: 'A',
-    year: '2026-2027',
-    semester: 'Semester I' as Semester
+    year: '2024-2025',
+    semester: 'Semester 1' as Semester
   });
 
   if (!isOpen) return null;
@@ -37,8 +37,8 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({ isOpen, onClos
 
   const departments = ['B.E CSE', 'B.Tech IT', 'B.E ECE', 'B.E EEE', 'B.E MECH'];
   const sections = ['A', 'B', 'C', 'D'];
-  const years = ['2026-2027', '2027-2028', '2028-2029', '2029-2030'];
-  const semesters: Semester[] = ['Semester I', 'Semester II', 'Semester III', 'Semester IV', 'Semester V', 'Semester VI', 'Semester VII', 'Semester VIII'];
+  const years = ['2023-2024', '2024-2025', '2025-2026'];
+  const semesters: Semester[] = ['Semester 1', 'Semester 2', 'Semester 3', 'Semester 4', 'Semester 5', 'Semester 6', 'Semester 7', 'Semester 8'];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">

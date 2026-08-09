@@ -39,9 +39,9 @@ export const LoginPage: React.FC = () => {
       }
 
       // Store JWT token (in production this could be an HttpOnly cookie or secure storage)
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('userId', data.user.id);
-      localStorage.setItem('userRole', data.user.role);
+      sessionStorage.setItem('token', data.token);
+      sessionStorage.setItem('userId', data.user.id);
+      sessionStorage.setItem('userRole', data.user.role);
 
       // Login using the context
       login(data.user.id, data.user.role);

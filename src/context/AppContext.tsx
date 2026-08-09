@@ -72,8 +72,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [role, setRole] = useState<UserRole>('STUDENT');
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isInitializing, setIsInitializing] = useState<boolean>(true);
-  const [academicYear, setAcademicYear] = useState<AcademicYear>('2026-2027');
-  const [semester, setSemester] = useState<Semester>('Semester V');
+  const [academicYear, setAcademicYear] = useState<AcademicYear>('2024-2025');
+  const [semester, setSemester] = useState<Semester>('Semester 6');
 
   const [students, setStudents] = useState<Student[]>([]);
   const [advisors, setAdvisors] = useState<Advisor[]>([]);
@@ -87,7 +87,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [deadlines, setDeadlines] = useState<Deadline[]>([]);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
-  // Fetch data from Supabase on mount
+  // Fetch data from Supabase on mount and poll for dynamic updates
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -103,18 +103,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (coursesData) setOnlineCourses(coursesData);
         if (deadlinesData) setDeadlines(deadlinesData);
         
-                let storedUserId = localStorage.getItem('userId');
-        let storedUserRole = localStorage.getItem('userRole');
+        let storedUserId = sessionStorage.getItem('userId');
+        let storedUserRole = sessionStorage.getItem('userRole');
 
         // Fallback for older sessions: decode the JWT token directly
-        const token = localStorage.getItem('token');
+        const token = sessionStorage.getItem('token');
         if (token && (!storedUserId || !storedUserRole)) {
           try {
             const payload = JSON.parse(atob(token.split('.')[1]));
             storedUserId = payload.id;
             storedUserRole = payload.role;
-            localStorage.setItem('userId', payload.id);
-            localStorage.setItem('userRole', payload.role);
+            sessionStorage.setItem('userId', payload.id);
+            sessionStorage.setItem('userRole', payload.role);
           } catch (e) {
             console.error('Failed to decode token payload:', e);
           }
@@ -138,6 +138,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     };
     fetchData();
+
+    // Poll for dynamic updates every 10 seconds to keep dashboards in sync
+    const intervalId = setInterval(async () => {
+      try {
+        const { data: odData } = await supabase.from('od_requests').select('*').order('created_at', { ascending: false });
+        if (odData) {
+          setOdRequests(prev => JSON.stringify(prev) !== JSON.stringify(odData) ? odData : prev);
+        }
+        
+        const { data: coursesData } = await supabase.from('online_courses').select('*').order('created_at', { ascending: false });
+        if (coursesData) {
+          setOnlineCourses(prev => JSON.stringify(prev) !== JSON.stringify(coursesData) ? coursesData : prev);
+        }
+      } catch (err) {
+        console.error("Error polling for updates:", err);
+      }
+    }, 10000);
+
+    return () => clearInterval(intervalId);
   }, []);
 
   const login = (userId: string, targetRole: UserRole) => {
@@ -153,9 +172,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('userId');
-    localStorage.removeItem('userRole');
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('userId');
+    sessionStorage.removeItem('userRole');
     setIsAuthenticated(false);
     window.location.href = '/';
   };
