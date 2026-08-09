@@ -15,6 +15,7 @@ import { StudentProfileAdvisorView } from '@/components/advisor/StudentProfileAd
 import { ODDetailAdvisorView } from '@/components/advisor/ODDetailAdvisorView';
 import { AdvisorProfileView } from '@/components/advisor/AdvisorProfileView';
 import { AdvisorDashboardView } from '@/components/advisor/AdvisorDashboardView';
+import { ManageDeadlinesView } from '@/components/advisor/ManageDeadlinesView';
 import { ODRequest, Student } from '@/types';
 import { Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -52,9 +53,9 @@ export default function DashboardRoute({ params }: { params: Promise<{ id: strin
   }, [isInitializing, isAuthenticated, role, currentStudent, id, router]);
 
     useEffect(() => {
-    if (role === 'STUDENT' && (activeTab === 'advisor_dashboard' || activeTab === 'advisor_students' || activeTab === 'advisor_pending')) {
+    if (role === 'STUDENT' && (activeTab.startsWith('advisor_'))) {
       setActiveTab('student_dashboard');
-    } else if (role === 'ADVISOR' && (activeTab === 'student_dashboard' || activeTab === 'student_requests' || activeTab === 'student_courses')) {
+    } else if (role === 'ADVISOR' && (activeTab.startsWith('student_'))) {
       setActiveTab('advisor_dashboard');
     }
   }, [role, activeTab]);
@@ -127,6 +128,8 @@ export default function DashboardRoute({ params }: { params: Promise<{ id: strin
         <MyStudentsView onSelectStudent={(st) => setSelectedStudent(st)} />
       ) : activeTab === 'advisor_pending' && role === 'ADVISOR' ? (
         <PendingApprovalsView onSelectODRequest={(od) => setSelectedOD(od)} />
+      ) : activeTab === 'advisor_deadlines' && role === 'ADVISOR' ? (
+        <ManageDeadlinesView />
       ) : (
         <DashboardView
           onOpenApplyOD={() => setIsApplyODOpen(true)}

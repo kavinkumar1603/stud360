@@ -17,7 +17,6 @@ import {
   ShieldCheck
 } from 'lucide-react';
 import { AcademicYear, Semester } from '../types';
-import { ManageDeadlinesModal } from './advisor/ManageDeadlinesModal';
 
 export type NavTab =
   | 'student_dashboard'
@@ -26,6 +25,7 @@ export type NavTab =
   | 'student_profile'
   | 'advisor_dashboard'
   | 'advisor_students'
+  | 'advisor_deadlines'
   | 'advisor_pending';
 
 interface SidebarLayoutProps {
@@ -57,7 +57,6 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({
   } = useApp();
 
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-  const [isDeadlinesModalOpen, setIsDeadlinesModalOpen] = useState(false);
 
   // Pending OD count for advisor badge
   const pendingAdvisorCount = odRequests.filter(
@@ -209,13 +208,14 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({
 
               <button
                 id="nav-advisor-deadlines"
-                onClick={() => {
-                  setIsDeadlinesModalOpen(true);
-                  if (window.innerWidth < 1024) setMobileSidebarOpen(false);
-                }}
-                className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer text-slate-600 hover:bg-amber-50 hover:text-amber-900"
+                onClick={() => handleNavClick('advisor_deadlines')}
+                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                  activeTab === 'advisor_deadlines'
+                    ? 'bg-amber-600 text-white shadow-sm font-bold'
+                    : 'text-slate-600 hover:bg-amber-50 hover:text-amber-900'
+                }`}
               >
-                <Calendar className="w-4 h-4 text-amber-500" />
+                <Calendar className={`w-4 h-4 ${activeTab === 'advisor_deadlines' ? 'text-white' : 'text-amber-500'}`} />
                 <span>Manage Deadlines</span>
               </button>
 
@@ -336,11 +336,6 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({
         </main>
 
       </div>
-
-      <ManageDeadlinesModal
-        isOpen={isDeadlinesModalOpen}
-        onClose={() => setIsDeadlinesModalOpen(false)}
-      />
     </div>
   );
 };
