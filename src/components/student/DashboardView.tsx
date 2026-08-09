@@ -35,7 +35,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const { currentStudent, academicYear, semester, odRequests, onlineCourses, advisors, deadlines } = useApp();
 
   const myAdvisor = advisors.find((a) => a.id === currentStudent.advisor_id);
-  const myDeadlines = deadlines.filter((d) => d.advisor_id === currentStudent.advisor_id);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const myDeadlines = deadlines.filter((d) => {
+    if (d.advisor_id !== currentStudent.advisor_id) return false;
+    const dueDate = new Date(d.due_date);
+    dueDate.setHours(0, 0, 0, 0);
+    return dueDate >= today;
+  });
 
   // Filter student data scoped to current academic_year + semester
   const studentODs = odRequests.filter(

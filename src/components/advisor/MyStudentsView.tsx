@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useApp } from '../../context/AppContext';
 import { Student } from '../../types';
 import {
@@ -13,7 +13,8 @@ import {
   ChevronLeft,
   ChevronRight,
   UserCheck,
-  UserPlus
+  UserPlus,
+  Users
 } from 'lucide-react';
 import { AddStudentModal } from './AddStudentModal';
 
@@ -27,8 +28,21 @@ export const MyStudentsView: React.FC<MyStudentsViewProps> = ({ onSelectStudent 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<'ALL' | 'RISK' | 'BORDERLINE' | 'TRACK'>('ALL');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [selectedClass, setSelectedClass] = useState<string | null>(null);
 
   const myAssignedStudents = students.filter((s) => s.advisor_id === currentAdvisor.id);
+
+  const uniqueClasses = useMemo(() => {
+    const classMap = new Map<string, Student[]>();
+    myAssignedStudents.forEach(st => {
+      const className = `${st.year || ''} ${st.department} ${st.section || ''}`.trim().replace(/\s+/g, ' ');
+      if (!classMap.has(className)) {
+        classMap.set(className, []);
+      }
+      classMap.get(className)!.push(st);
+    });
+    return Array.from(classMap.entries()).map(([name, studentsList]) => ({ name, students: studentsList }));
+  }, [myAssignedStudents]);
 
   // Extend mock students for rich table presentation matching Image 2
   const adviseeData = [
@@ -86,15 +100,30 @@ export const MyStudentsView: React.FC<MyStudentsViewProps> = ({ onSelectStudent 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">My Advisees</h1>
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-600 text-white">{myAssignedStudents.length}</span>
+            {selectedClass && (
+              <button onClick={() => setSelectedClass(null)} className="mr-2 p-1.5 hover:bg-slate-200 rounded-lg text-slate-500 transition-colors cursor-pointer">
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+            )}
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+              {selectedClass ? `${selectedClass} - Students` : 'My Advisees Cohorts'}
+            </h1>
+            {!selectedClass && (
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-600 text-white">{myAssignedStudents.length}</span>
+            )}
           </div>
           <p className="text-xs text-slate-500 font-medium mt-0.5 max-w-2xl">
-            Monitor academic progress, attendance anomalies, and review pending on-duty requests for your assigned cohort.
+            {selectedClass ? `Viewing students assigned to you in ${selectedClass}.` : 'Select a class cohort to view student details and academic progress.'}
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          {selectedClass && (
+            <button className="px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 text-xs font-bold hover:bg-slate-50 shadow-xs flex items-center gap-1.5 cursor-pointer">
+              <Download className="w-3.5 h-3.5" />
+              <span>Export CSV</span>
+            </button>
+          )}
           <button 
             onClick={() => setIsAddModalOpen(true)}
             className="px-4 py-2 rounded-xl bg-teal-600 text-white text-xs font-bold hover:bg-teal-700 shadow-sm flex items-center gap-1.5 cursor-pointer"
@@ -102,19 +131,38 @@ export const MyStudentsView: React.FC<MyStudentsViewProps> = ({ onSelectStudent 
             <UserPlus className="w-3.5 h-3.5" />
             <span>Add Student</span>
           </button>
-          <button className="px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 text-xs font-bold hover:bg-slate-50 shadow-xs flex items-center gap-1.5 cursor-pointer">
-            <Download className="w-3.5 h-3.5" />
-            <span>Export CSV</span>
-          </button>
-          <button className="px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 shadow-sm flex items-center gap-1.5 cursor-pointer">
-            <Mail className="w-3.5 h-3.5" />
-            <span>Message Cohort</span>
-          </button>
         </div>
       </div>
 
-      {/* Main Advisees Table Container (Matching Image 2) */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-xs space-y-4">
+      {selectedClass === null ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {uniqueClasses.map((cls) => (
+            <div 
+              key={cls.name} 
+              onClick={() => setSelectedClass(cls.name)}
+              className="bg-white border border-slate-200 rounded-2xl p-6 shadow-xs hover:shadow-md transition-all cursor-pointer hover:border-blue-400 group flex flex-col justify-between min-h-[160px]"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                  <Users className="w-6 h-6" />
+                </div>
+                <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-blue-500 transition-colors" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-slate-900">{cls.name || 'Unknown Class'}</h3>
+                <p className="text-xs font-bold text-slate-500 mt-1 uppercase tracking-wider">{cls.students.length} Students Assigned</p>
+              </div>
+            </div>
+          ))}
+          {uniqueClasses.length === 0 && (
+            <div className="col-span-full py-12 text-center border-2 border-dashed border-slate-200 rounded-2xl bg-white">
+              <Users className="w-8 h-8 text-slate-300 mx-auto mb-3" />
+              <p className="text-sm font-bold text-slate-600">No students assigned yet.</p>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-xs space-y-4">
         
         {/* Search Bar */}
         <div className="relative">
@@ -145,6 +193,7 @@ export const MyStudentsView: React.FC<MyStudentsViewProps> = ({ onSelectStudent 
             </thead>
             <tbody className="divide-y divide-slate-100 text-xs bg-white">
               {myAssignedStudents
+                .filter(s => `${s.year || ''} ${s.department} ${s.section || ''}`.trim().replace(/\s+/g, ' ') === selectedClass)
                 .filter((s) => {
                   if (searchQuery.trim() !== '') {
                     const q = searchQuery.toLowerCase();
@@ -214,21 +263,10 @@ export const MyStudentsView: React.FC<MyStudentsViewProps> = ({ onSelectStudent 
           </table>
         </div>
 
-        {/* Table Footer Pagination */}
-        <div className="p-2 pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-          <span>Showing 1-3 of 42 students</span>
-          <div className="flex items-center gap-1">
-            <button className="p-1 rounded border border-slate-200"><ChevronLeft className="w-4 h-4" /></button>
-            <button className="px-2.5 py-1 rounded font-bold bg-blue-600 text-white">1</button>
-            <button className="px-2.5 py-1 rounded font-bold text-slate-600 hover:bg-slate-100">2</button>
-            <button className="px-2.5 py-1 rounded font-bold text-slate-600 hover:bg-slate-100">3</button>
-            <span className="px-1 text-slate-400">...</span>
-            <button className="px-2.5 py-1 rounded font-bold text-slate-600 hover:bg-slate-100">14</button>
-            <button className="p-1 rounded border border-slate-200"><ChevronRight className="w-4 h-4" /></button>
-          </div>
-        </div>
 
-      </div>
+
+        </div>
+      )}
 
       <AddStudentModal 
         isOpen={isAddModalOpen} 
