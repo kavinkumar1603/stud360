@@ -32,6 +32,22 @@ export default function DashboardRoute({ params }: { params: Promise<{ id: strin
   const [isApplyODOpen, setIsApplyODOpen] = useState(false);
   const [isAddCourseOpen, setIsAddCourseOpen] = useState(false);
 
+  // Sync tab state with browser history to fix back button bug
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.history.replaceState({ tab: activeTab }, '', window.location.href);
+
+      const handlePopState = (event: PopStateEvent) => {
+        if (event.state && event.state.tab) {
+          setActiveTab(event.state.tab as NavTab);
+        }
+      };
+      
+      window.addEventListener('popstate', handlePopState);
+      return () => window.removeEventListener('popstate', handlePopState);
+    }
+  }, []);
+
   // Security checks
   useEffect(() => {
     if (isInitializing) return;
@@ -52,7 +68,7 @@ export default function DashboardRoute({ params }: { params: Promise<{ id: strin
     }
   }, [isInitializing, isAuthenticated, role, currentStudent, id, router]);
 
-    useEffect(() => {
+  useEffect(() => {
     if (role === 'STUDENT' && (activeTab.startsWith('advisor_'))) {
       setActiveTab('student_dashboard');
     } else if (role === 'ADVISOR' && (activeTab.startsWith('student_'))) {
@@ -64,6 +80,10 @@ export default function DashboardRoute({ params }: { params: Promise<{ id: strin
     setActiveTab(tab);
     setSelectedOD(null);
     setSelectedStudent(null);
+    if (typeof window !== 'undefined') {
+      // Use URL constructor to only change search params if we wanted, or just replace state. We'll just pushState.
+      window.history.pushState({ tab }, '', window.location.href);
+    }
   };
 
   if (isInitializing || !isAuthenticated) {
