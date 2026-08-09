@@ -12,8 +12,11 @@ import {
   ProofStatus,
   Semester,
   Student,
-  UserRole
+  UserRole,
+  Deadline
 } from '../types';
+
+
 
 export interface ToastMessage {
   id: string;
@@ -40,6 +43,7 @@ interface AppContextType {
   advisors: Advisor[];
   odRequests: ODRequest[];
   onlineCourses: OnlineCourse[];
+  deadlines: Deadline[];
   toasts: ToastMessage[];
   addToast: (message: string, type?: 'success' | 'error' | 'info') => void;
   removeToast: (id: string) => void;
@@ -55,7 +59,10 @@ interface AppContextType {
   advisorReviewOD: (odId: string, status: AdvisorStatus, remarks?: string) => Promise<void>;
   advisorVerifyProof: (odId: string, memberStudentId: string, newStatus: 'VERIFIED' | 'REJECTED') => Promise<void>;
   addOnlineCourse: (data: Omit<OnlineCourse, 'id' | 'student_id' | 'student_name' | 'student_roll' | 'academic_year' | 'semester' | 'verified_by_advisor' | 'created_at'>) => void;
+  addStudent: (data: Omit<Student, 'id' | 'advisor_id'>) => Promise<void>;
   toggleCourseVerify: (courseId: string, verified: boolean) => void;
+  addDeadline: (data: { title: string; description?: string; due_date: string }) => Promise<void>;
+  deleteDeadline: (id: string) => Promise<void>;
   resetToDefaultData: () => void;
 }
 
@@ -77,6 +84,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const [odRequests, setOdRequests] = useState<ODRequest[]>([]);
   const [onlineCourses, setOnlineCourses] = useState<OnlineCourse[]>([]);
+  const [deadlines, setDeadlines] = useState<Deadline[]>([]);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
   // Fetch data from Supabase on mount
@@ -87,11 +95,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const { data: advisorsData } = await supabase.from('advisors').select('*');
         const { data: odData } = await supabase.from('od_requests').select('*').order('created_at', { ascending: false });
         const { data: coursesData } = await supabase.from('online_courses').select('*').order('created_at', { ascending: false });
+        const { data: deadlinesData } = await supabase.from('deadlines').select('*').order('due_date', { ascending: true });
         
         if (studentsData) setStudents(studentsData);
         if (advisorsData) setAdvisors(advisorsData);
         if (odData) setOdRequests(odData);
         if (coursesData) setOnlineCourses(coursesData);
+        if (deadlinesData) setDeadlines(deadlinesData);
         
                 let storedUserId = localStorage.getItem('userId');
         let storedUserRole = localStorage.getItem('userRole');
@@ -142,7 +152,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setIsAuthenticated(true);
   };
 
-    const logout = () => {
+  const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('userId');
     localStorage.removeItem('userRole');
@@ -275,6 +285,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  const addStudent = async (data: Omit<Student, 'id' | 'advisor_id'>) => {
+    if (!currentAdvisor?.id) return;
+    
+    const newStudent = {
+      ...data,
+      advisor_id: currentAdvisor.id
+    };
+
+    const { data: inserted, error } = await supabase.from('students').insert(newStudent).select().single();
+    
+    if (error) {
+      addToast('Error adding student', 'error');
+      console.error(error);
+    } else if (inserted) {
+      setStudents((prev) => [...prev, inserted]);
+      addToast('Student added successfully', 'success');
+    }
+  };
+
   const addOnlineCourse = async (
     data: Omit<OnlineCourse, 'id' | 'student_id' | 'student_name' | 'student_roll' | 'academic_year' | 'semester' | 'verified_by_advisor' | 'created_at'>
   ) => {
@@ -307,6 +336,36 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  const addDeadline = async (data: { title: string; description?: string; due_date: string }) => {
+    if (!currentAdvisor?.id) return;
+    
+    const newDeadline = {
+      ...data,
+      advisor_id: currentAdvisor.id
+    };
+
+    const { data: inserted, error } = await supabase.from('deadlines').insert(newDeadline).select().single();
+    
+    if (error) {
+      addToast('Error adding deadline', 'error');
+      console.error(error);
+    } else if (inserted) {
+      setDeadlines((prev) => [...prev, inserted].sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime()));
+      addToast('Deadline added successfully', 'success');
+    }
+  };
+
+  const deleteDeadline = async (id: string) => {
+    const { error } = await supabase.from('deadlines').delete().eq('id', id);
+    if (error) {
+      addToast('Error deleting deadline', 'error');
+      console.error(error);
+    } else {
+      setDeadlines((prev) => prev.filter(d => d.id !== id));
+      addToast('Deadline deleted', 'info');
+    }
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -328,6 +387,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         advisors,
         odRequests,
         onlineCourses,
+        deadlines,
         toasts,
         addToast,
         removeToast,
@@ -335,8 +395,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         updateODRequestProof,
         advisorReviewOD,
         advisorVerifyProof,
+        addStudent,
         addOnlineCourse,
         toggleCourseVerify,
+        addDeadline,
+        deleteDeadline,
         resetToDefaultData
       }}
     >

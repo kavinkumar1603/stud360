@@ -12,18 +12,21 @@ import {
   TrendingUp,
   ChevronLeft,
   ChevronRight,
-  UserCheck
+  UserCheck,
+  UserPlus
 } from 'lucide-react';
+import { AddStudentModal } from './AddStudentModal';
 
 interface MyStudentsViewProps {
   onSelectStudent: (student: Student) => void;
 }
 
 export const MyStudentsView: React.FC<MyStudentsViewProps> = ({ onSelectStudent }) => {
-  const { currentAdvisor, students, odRequests } = useApp();
+  const { currentAdvisor, students, odRequests, addStudent } = useApp();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<'ALL' | 'RISK' | 'BORDERLINE' | 'TRACK'>('ALL');
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   const myAssignedStudents = students.filter((s) => s.advisor_id === currentAdvisor.id);
 
@@ -91,7 +94,14 @@ export const MyStudentsView: React.FC<MyStudentsViewProps> = ({ onSelectStudent 
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <button 
+            onClick={() => setIsAddModalOpen(true)}
+            className="px-4 py-2 rounded-xl bg-teal-600 text-white text-xs font-bold hover:bg-teal-700 shadow-sm flex items-center gap-1.5 cursor-pointer"
+          >
+            <UserPlus className="w-3.5 h-3.5" />
+            <span>Add Student</span>
+          </button>
           <button className="px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 text-xs font-bold hover:bg-slate-50 shadow-xs flex items-center gap-1.5 cursor-pointer">
             <Download className="w-3.5 h-3.5" />
             <span>Export CSV</span>
@@ -220,8 +230,11 @@ export const MyStudentsView: React.FC<MyStudentsViewProps> = ({ onSelectStudent 
 
       </div>
 
-
-
+      <AddStudentModal 
+        isOpen={isAddModalOpen} 
+        onClose={() => setIsAddModalOpen(false)} 
+        onAdd={addStudent} 
+      />
     </div>
   );
 };

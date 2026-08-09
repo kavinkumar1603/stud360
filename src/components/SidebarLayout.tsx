@@ -1,5 +1,4 @@
 'use client';
-
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import {
@@ -18,6 +17,7 @@ import {
   ShieldCheck
 } from 'lucide-react';
 import { AcademicYear, Semester } from '../types';
+import { ManageDeadlinesModal } from './advisor/ManageDeadlinesModal';
 
 export type NavTab =
   | 'student_dashboard'
@@ -57,6 +57,7 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({
   } = useApp();
 
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [isDeadlinesModalOpen, setIsDeadlinesModalOpen] = useState(false);
 
   // Pending OD count for advisor badge
   const pendingAdvisorCount = odRequests.filter(
@@ -207,6 +208,18 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({
               </button>
 
               <button
+                id="nav-advisor-deadlines"
+                onClick={() => {
+                  setIsDeadlinesModalOpen(true);
+                  if (window.innerWidth < 1024) setMobileSidebarOpen(false);
+                }}
+                className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer text-slate-600 hover:bg-amber-50 hover:text-amber-900"
+              >
+                <Calendar className="w-4 h-4 text-amber-500" />
+                <span>Manage Deadlines</span>
+              </button>
+
+              <button
                 id="nav-advisor-pending"
                 onClick={() => handleNavClick('advisor_pending')}
                 className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
@@ -324,7 +337,10 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({
 
       </div>
 
+      <ManageDeadlinesModal
+        isOpen={isDeadlinesModalOpen}
+        onClose={() => setIsDeadlinesModalOpen(false)}
+      />
     </div>
   );
 };
-

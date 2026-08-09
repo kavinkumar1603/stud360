@@ -1,7 +1,7 @@
 export type UserRole = 'STUDENT' | 'ADVISOR';
 
-export type AcademicYear = '2026-2027';
-export type Semester = 'Semester V';
+export type AcademicYear = string;
+export type Semester = string;
 
 export type ODRequestType = 'Individual' | 'Team';
 
@@ -66,6 +66,15 @@ export interface OnlineCourse {
   certificate_url?: string;
   grade?: string;
   verified_by_advisor: boolean;
+  created_at: string;
+}
+
+export interface Deadline {
+  id: string;
+  advisor_id: string;
+  title: string;
+  description?: string;
+  due_date: string;
   created_at: string;
 }
 

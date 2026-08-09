@@ -32,9 +32,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onSelectODRequest,
   onNavigateTab
 }) => {
-  const { currentStudent, academicYear, semester, odRequests, onlineCourses, advisors } = useApp();
+  const { currentStudent, academicYear, semester, odRequests, onlineCourses, advisors, deadlines } = useApp();
 
   const myAdvisor = advisors.find((a) => a.id === currentStudent.advisor_id);
+  const myDeadlines = deadlines.filter((d) => d.advisor_id === currentStudent.advisor_id);
 
   // Filter student data scoped to current academic_year + semester
   const studentODs = odRequests.filter(
@@ -265,31 +266,37 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </h2>
 
             <div className="space-y-3">
-              
-              {/* Deadline Item 1 */}
-              <div className="p-3.5 rounded-xl bg-red-50/60 border-l-4 border-red-500 border border-slate-100 flex items-center gap-3">
-                <div className="text-center px-2 py-1 bg-white rounded-lg border border-red-100 shrink-0">
-                  <span className="text-[9px] font-extrabold uppercase text-red-500 block">OCT</span>
-                  <span className="text-base font-black text-slate-900 leading-none">15</span>
-                </div>
-                <div>
-                  <h3 className="text-xs font-bold text-slate-900">NPTEL Final Exam Registration</h3>
-                  <p className="text-[11px] text-slate-500">Course: Cloud Computing Essentials</p>
-                </div>
-              </div>
+              {myDeadlines.length === 0 ? (
+                <p className="text-xs text-slate-500 text-center py-4 bg-slate-50 rounded-xl border border-slate-100">
+                  No upcoming deadlines.
+                </p>
+              ) : (
+                myDeadlines.map((dl, index) => {
+                  const date = new Date(dl.due_date);
+                  const month = date.toLocaleString('default', { month: 'short' });
+                  const day = date.getDate().toString().padStart(2, '0');
+                  
+                  // Alternate colors for a dynamic look
+                  const isRed = index % 2 === 0;
+                  const bgClass = isRed ? 'bg-red-50/60' : 'bg-blue-50/60';
+                  const borderLeftClass = isRed ? 'border-red-500' : 'border-blue-500';
+                  const textClass = isRed ? 'text-red-500' : 'text-blue-600';
+                  const borderIconClass = isRed ? 'border-red-100' : 'border-blue-100';
 
-              {/* Deadline Item 2 */}
-              <div className="p-3.5 rounded-xl bg-blue-50/60 border-l-4 border-blue-500 border border-slate-100 flex items-center gap-3">
-                <div className="text-center px-2 py-1 bg-white rounded-lg border border-blue-100 shrink-0">
-                  <span className="text-[9px] font-extrabold uppercase text-blue-600 block">NOV</span>
-                  <span className="text-base font-black text-slate-900 leading-none">02</span>
-                </div>
-                <div>
-                  <h3 className="text-xs font-bold text-slate-900">Submit Event Participation Proof</h3>
-                  <p className="text-[11px] text-slate-500">For OD applied on Sep 20</p>
-                </div>
-              </div>
-
+                  return (
+                    <div key={dl.id} className={`p-3.5 rounded-xl ${bgClass} border-l-4 ${borderLeftClass} border border-slate-100 flex items-center gap-3`}>
+                      <div className={`text-center px-2 py-1 bg-white rounded-lg border ${borderIconClass} shrink-0`}>
+                        <span className={`text-[9px] font-extrabold uppercase ${textClass} block`}>{month}</span>
+                        <span className="text-base font-black text-slate-900 leading-none">{day}</span>
+                      </div>
+                      <div>
+                        <h3 className="text-xs font-bold text-slate-900">{dl.title}</h3>
+                        {dl.description && <p className="text-[11px] text-slate-500">{dl.description}</p>}
+                      </div>
+                    </div>
+                  );
+                })
+              )}
             </div>
           </div>
 

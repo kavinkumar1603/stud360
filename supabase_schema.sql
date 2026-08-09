@@ -81,17 +81,29 @@ CREATE TABLE public.online_courses (
   created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
+-- Create Deadlines Table
+CREATE TABLE public.deadlines (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  advisor_id uuid REFERENCES public.advisors(id) NOT NULL,
+  title text NOT NULL,
+  description text,
+  due_date date NOT NULL,
+  created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
 -- Set up Row Level Security (RLS)
 ALTER TABLE public.advisors ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.students ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.od_requests ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.online_courses ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.deadlines ENABLE ROW LEVEL SECURITY;
 
 -- Create Policies (Allowing all for now since there's no real authentication yet)
 CREATE POLICY "Enable read access for all users" ON public.advisors FOR SELECT USING (true);
 CREATE POLICY "Enable all access for all users" ON public.students FOR ALL USING (true);
 CREATE POLICY "Enable all access for all users" ON public.od_requests FOR ALL USING (true);
 CREATE POLICY "Enable all access for all users" ON public.online_courses FOR ALL USING (true);
+CREATE POLICY "Enable all access for all users" ON public.deadlines FOR ALL USING (true);
 
 -- Insert Mock Data
 INSERT INTO public.advisors (id, name, department, email, title)
