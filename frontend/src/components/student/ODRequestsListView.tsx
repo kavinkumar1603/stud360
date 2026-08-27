@@ -112,7 +112,7 @@ export const ODRequestsListView: React.FC<ODRequestsListViewProps> = ({
           className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-sm flex items-center gap-2 cursor-pointer self-start sm:self-auto"
         >
           <Plus className="w-4 h-4" />
-          <span>+New Request</span>
+          <span>New Request</span>
         </button>
       </div>
 

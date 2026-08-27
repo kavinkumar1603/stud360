@@ -23,6 +23,7 @@ export const ApplyODModal: React.FC<ApplyODModalProps> = ({ isOpen, onClose, onS
   const [mentorDesignation, setMentorDesignation] = useState('');
   const [contactNumber, setContactNumber] = useState('');
   const [description, setDescription] = useState('');
+  const [hackathonLink, setHackathonLink] = useState('');
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
 
@@ -53,11 +54,13 @@ export const ApplyODModal: React.FC<ApplyODModalProps> = ({ isOpen, onClose, onS
     setSelectedTeamMembers((prev) => prev.filter((m) => m.id !== id));
   };
 
-  const isDateValid = fromDate && toDate && isValidDateRange(fromDate, toDate);
+  const todayStr = new Date().toLocaleDateString('en-CA'); // Gets YYYY-MM-DD reliably in local time
+  const isFutureDate = fromDate >= todayStr;
+  const isDateValid = fromDate && toDate && isValidDateRange(fromDate, toDate) && isFutureDate;
   const isEventFilled = eventName.trim().length > 0;
   const isTeamValid = requestType === 'Individual' || selectedTeamMembers.length >= 1;
 
-  const isSubmitEnabled = isEventFilled && isDateValid && isTeamValid && venue.trim().length > 0 && mentorName.trim().length > 0 && contactNumber.trim().length > 0;
+  const isSubmitEnabled = isEventFilled && isDateValid && isTeamValid && venue.trim().length > 0 && mentorName.trim().length > 0 && contactNumber.length === 10;
 
   
   const handleDownload = () => {
@@ -99,7 +102,7 @@ export const ApplyODModal: React.FC<ApplyODModalProps> = ({ isOpen, onClose, onS
     e.preventDefault();
     if (!isSubmitEnabled) return;
 
-    const fullDescription = `Venue: ${venue}\nMentor: ${mentorName} (${mentorDesignation})\nContact: ${contactNumber}\n\nDetails: ${description.trim()}`;
+    const fullDescription = `Venue: ${venue}\nMentor: ${mentorName} (${mentorDesignation})\nContact: ${contactNumber}\nEvent Link: ${hackathonLink || 'N/A'}\n\nDetails: ${description.trim()}`;
     
     addODRequest({
       event_name: eventName.trim(),
@@ -121,6 +124,7 @@ export const ApplyODModal: React.FC<ApplyODModalProps> = ({ isOpen, onClose, onS
     setMentorDesignation('');
     setContactNumber('');
     setDescription('');
+    setHackathonLink('');
     setFromDate('');
     setToDate('');
     setSelectedTeamMembers([]);
@@ -242,7 +246,22 @@ export const ApplyODModal: React.FC<ApplyODModalProps> = ({ isOpen, onClose, onS
               />
             </div>
 
-                        {/* Venue, Mentor, Contact */}
+                        {/* Hackathon Link */}
+            <div>
+              <label className="block text-xs font-medium text-slate-700 mb-1">
+                Hackathon / Event Link <span className="text-slate-400 font-normal">(Optional)</span>
+              </label>
+              <input
+                id="input-od-hackathon-link"
+                type="url"
+                value={hackathonLink}
+                onChange={(e) => setHackathonLink(e.target.value)}
+                placeholder="https://..."
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            {/* Venue, Mentor, Contact */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-medium text-slate-700 mb-1">
@@ -264,9 +283,13 @@ export const ApplyODModal: React.FC<ApplyODModalProps> = ({ isOpen, onClose, onS
                 <input
                   type="tel"
                   required
+                  maxLength={10}
                   value={contactNumber}
-                  onChange={(e) => setContactNumber(e.target.value)}
-                  placeholder="Your Phone Number"
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/\D/g, '');
+                    if (val.length <= 10) setContactNumber(val);
+                  }}
+                  placeholder="Your 10-digit Number"
                   className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -311,6 +334,8 @@ export const ApplyODModal: React.FC<ApplyODModalProps> = ({ isOpen, onClose, onS
                     id="input-od-from-date"
                     type="date"
                     required
+                    min={todayStr}
+                    max="2027-12-31"
                     value={fromDate}
                     onChange={(e) => setFromDate(e.target.value)}
                     className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -327,6 +352,8 @@ export const ApplyODModal: React.FC<ApplyODModalProps> = ({ isOpen, onClose, onS
                     id="input-od-to-date"
                     type="date"
                     required
+                    min={fromDate || todayStr}
+                    max="2027-12-31"
                     value={toDate}
                     onChange={(e) => setToDate(e.target.value)}
                     className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -340,6 +367,12 @@ export const ApplyODModal: React.FC<ApplyODModalProps> = ({ isOpen, onClose, onS
               <p className="text-xs text-red-500 flex items-center gap-1 mt-1">
                 <AlertCircle className="w-3.5 h-3.5" />
                 "To Date" must be on or after "From Date".
+              </p>
+            )}
+            {fromDate && fromDate < new Date().toLocaleDateString('en-CA') && (
+              <p className="text-xs text-red-500 flex items-center gap-1 mt-1">
+                <AlertCircle className="w-3.5 h-3.5" />
+                Cannot apply for past dates.
               </p>
             )}
 
