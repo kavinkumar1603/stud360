@@ -51,25 +51,17 @@ export const ODRequestsListView: React.FC<ODRequestsListViewProps> = ({
       if (!matchName && !matchCategory && !matchLoc && !matchId) return false;
     }
 
-    if (activeTabFilter === 'PENDING') {
-      return od.advisor_status === 'PENDING' || (od.advisor_status === 'APPROVED' && od.od_final_status === 'PENDING');
-    }
-    if (activeTabFilter === 'APPROVED') {
-      return od.od_final_status === 'APPROVED';
-    }
-    if (activeTabFilter === 'REJECTED') {
-      return od.advisor_status === 'REJECTED' || od.od_final_status === 'REJECTED';
+    if (activeTabFilter !== 'ALL') {
+      return od.advisor_status === activeTabFilter;
     }
 
     return true;
   });
 
   const countAll = myODs.length;
-  const countPending = myODs.filter(
-    (od) => od.advisor_status === 'PENDING' || (od.advisor_status === 'APPROVED' && od.od_final_status === 'PENDING')
-  ).length;
-  const countApproved = myODs.filter((od) => od.od_final_status === 'APPROVED').length;
-  const countRejected = myODs.filter((od) => od.advisor_status === 'REJECTED' || od.od_final_status === 'REJECTED').length;
+  const countPending = myODs.filter((od) => od.advisor_status === 'PENDING').length;
+  const countApproved = myODs.filter((od) => od.advisor_status === 'APPROVED').length;
+  const countRejected = myODs.filter((od) => od.advisor_status === 'REJECTED').length;
 
   // Render Type Icon based on Category
   const renderCategoryIcon = (category?: string) => {

@@ -180,7 +180,7 @@ export const LoginPage: React.FC = () => {
                     required
                     value={credential}
                     onChange={(e) => {
-                      setCredential(e.target.value);
+                      setCredential(e.target.value.toUpperCase());
                       if (errorMessage) setErrorMessage('');
                     }}
                     placeholder="username"
@@ -217,7 +217,7 @@ export const LoginPage: React.FC = () => {
                     required
                     value={password}
                     onChange={(e) => {
-                      setPassword(e.target.value);
+                      setPassword(e.target.value.toUpperCase());
                       if (errorMessage) setErrorMessage('');
                     }}
                     placeholder="password"

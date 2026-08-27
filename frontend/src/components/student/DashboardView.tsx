@@ -43,25 +43,17 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     return dueDate >= today;
   });
 
-  // Filter student data scoped to current academic_year + semester
+  // Filter student data
   const studentODs = odRequests.filter(
     (od) =>
-      (od.student_id === currentStudent.id || od.team_members.some((m) => m.student_id === currentStudent.id)) &&
-      od.academic_year === academicYear &&
-      od.semester === semester
+      (od.student_id === currentStudent.id || od.team_members.some((m) => m.student_id === currentStudent.id))
   );
 
 
   // Count Badges calculations
-  const countODPending = studentODs.filter(
-    (od) => od.advisor_status === 'PENDING' || (od.advisor_status === 'APPROVED' && od.od_final_status === 'PENDING')
-  ).length;
-
-  const countODApproved = studentODs.filter((od) => od.od_final_status === 'APPROVED').length;
-
-  const countODRejected = studentODs.filter(
-    (od) => od.advisor_status === 'REJECTED' || od.od_final_status === 'REJECTED'
-  ).length;
+  const countODPending = studentODs.filter((od) => od.advisor_status === 'PENDING').length;
+  const countODApproved = studentODs.filter((od) => od.advisor_status === 'APPROVED').length;
+  const countODRejected = studentODs.filter((od) => od.advisor_status === 'REJECTED').length;
 
   return (
     <div className="space-y-6">
