@@ -421,8 +421,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         method: 'DELETE'
       });
       if (!res.ok) {
-        const errText = await res.text().catch(() => '');
-        throw new Error(`Failed to delete OD request (Status: ${res.status}). Details: ${errText}`);
+        if (res.status === 404) {
+          // Fallback: If backend is outdated and returns 404, delete directly from Supabase
+          const { supabase } = await import('../utils/supabase');
+          const { error } = await supabase.from('od_requests').delete().eq('id', id);
+          if (error) throw error;
+        } else {
+          const errText = await res.text().catch(() => '');
+          throw new Error(`Failed to delete OD request (Status: ${res.status}). Details: ${errText}`);
+        }
       }
       setOdRequests((prev) => prev.filter(od => od.id !== id));
       addToast('OD request deleted successfully', 'info');
