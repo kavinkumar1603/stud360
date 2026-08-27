@@ -59,6 +59,7 @@ interface AppContextType {
   advisorVerifyProof: (odId: string, memberStudentId: string, newStatus: 'VERIFIED' | 'REJECTED') => Promise<void>;
   addStudent: (data: Omit<Student, 'id' | 'advisor_id'>) => Promise<void>;
   addDeadline: (data: { title: string; description?: string; due_date: string }) => Promise<void>;
+  deleteODRequest: (id: string) => Promise<void>;
   deleteDeadline: (id: string) => Promise<void>;
   resetToDefaultData: () => void;
 }
@@ -97,11 +98,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (data.advisors) setAdvisors(data.advisors);
         if (data.classes) setClasses(data.classes);
         if (data.odRequests) {
-          const mapped = data.odRequests.map((od: any) => ({
-            ...od,
-            academic_year: od.academic_year === '2024-2025' ? '2026-2027' : od.academic_year
-          }));
-          setOdRequests(mapped);
+          setOdRequests(data.odRequests);
         }
         if (data.deadlines) setDeadlines(data.deadlines);
         
@@ -149,11 +146,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const data = await response.json();
         
         if (data.odRequests) {
-          const mapped = data.odRequests.map((od: any) => ({
-            ...od,
-            academic_year: od.academic_year === '2024-2025' ? '2026-2027' : od.academic_year
-          }));
-          setOdRequests(prev => JSON.stringify(prev) !== JSON.stringify(mapped) ? mapped : prev);
+          setOdRequests(prev => JSON.stringify(prev) !== JSON.stringify(data.odRequests) ? data.odRequests : prev);
         }
       } catch (err) {
         console.error("Error polling for updates:", err);
@@ -215,7 +208,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       student_name: currentStudent.name,
       student_roll: currentStudent.roll_no,
       advisor_id: currentStudent.advisor_id,
-      academic_year: academicYear === '2026-2027' ? '2024-2025' : academicYear,
+      academic_year: academicYear,
       semester: semester,
       event_name: data.event_name,
       description: data.description,
@@ -242,11 +235,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         throw new Error(`Failed to save: ${errData.error || res.statusText}`);
       }
       const inserted = await res.json();
-      
-      // Map it back for the frontend state
-      if (inserted.academic_year === '2024-2025') {
-        inserted.academic_year = '2026-2027';
-      }
       
       setOdRequests((prev) => [inserted, ...prev]);
       addToast('Sent to your advisor for approval', 'success');
@@ -276,9 +264,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       });
       if (!res.ok) throw new Error('Failed to update');
       const updated = await res.json();
-      if (updated.academic_year === '2024-2025') {
-        updated.academic_year = '2026-2027';
-      }
       setOdRequests(prev => prev.map(r => r.id === odId ? updated : r));
       addToast('Proof submitted — Awaiting verification', 'success');
     } catch (error) {
@@ -314,9 +299,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       });
       if (!res.ok) throw new Error('Failed to update');
       const updated = await res.json();
-      if (updated.academic_year === '2024-2025') {
-        updated.academic_year = '2026-2027';
-      }
       setOdRequests(prev => prev.map(r => r.id === odId ? updated : r));
       addToast(status === 'APPROVED' ? 'OD Request Approved successfully' : 'OD Request Rejected', status === 'APPROVED' ? 'success' : 'info');
     } catch (error) {
@@ -344,9 +326,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       });
       if (!res.ok) throw new Error('Failed to update');
       const updated = await res.json();
-      if (updated.academic_year === '2024-2025') {
-        updated.academic_year = '2026-2027';
-      }
       setOdRequests(prev => prev.map(r => r.id === odId ? updated : r));
       addToast(newStatus === 'VERIFIED' ? 'Proof verified and marked complete' : 'Proof rejected — student requested to resubmit', newStatus === 'VERIFIED' ? 'success' : 'info');
     } catch (error) {
@@ -410,6 +389,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       addToast('Deadline deleted', 'info');
     } catch (error) {
       addToast('Error deleting deadline', 'error');
+      console.error(error);
+    }
+  };
+
+  const deleteODRequest = async (id: string) => {
+    try {
+      const res = await fetch(`${API_URL}/od-requests/${id}`, {
+        method: 'DELETE'
+      });
+      if (!res.ok) {
+        const errText = await res.text().catch(() => '');
+        throw new Error(`Failed to delete OD request (Status: ${res.status}). Details: ${errText}`);
+      }
+      setOdRequests((prev) => prev.filter(od => od.id !== id));
+      addToast('OD request deleted successfully', 'info');
+    } catch (error) {
+      addToast('Error deleting OD request', 'error');
       console.error(error);
     }
   };
@@ -484,6 +480,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         advisorVerifyProof,
         addStudent,
         addDeadline,
+        deleteODRequest,
         deleteDeadline,
         resetToDefaultData
       }}

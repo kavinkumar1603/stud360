@@ -160,6 +160,17 @@ app.put('/api/od-requests/:id', async (req, res) => {
   }
 });
 
+app.delete('/api/od-requests/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { error } = await supabase.from('od_requests').delete().eq('id', id);
+    if (error) throw error;
+    res.json({ message: 'Deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.post('/api/students', async (req, res) => {
   try {
     const { data: inserted, error } = await supabase.from('students').insert(req.body).select().single();

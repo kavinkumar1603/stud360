@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { ODRequest } from '../../types';
 import { formatDateRange } from '../../utils/validation';
-import { Clock, Users, User, ChevronRight, CheckCircle2, FileText, CheckCircle, XCircle } from 'lucide-react';
+import { Clock, Users, User, ChevronRight, CheckCircle2, FileText, CheckCircle, XCircle, Trash2 } from 'lucide-react';
 
 interface AdvisorODRequestsViewProps {
   onSelectODRequest: (od: ODRequest) => void;
@@ -15,7 +15,7 @@ export const AdvisorODRequestsView: React.FC<AdvisorODRequestsViewProps> = ({
   onSelectODRequest,
   defaultFilter = 'PENDING'
 }) => {
-  const { currentAdvisor, odRequests, students, academicYear, semester } = useApp();
+  const { currentAdvisor, odRequests, students, academicYear, semester, deleteODRequest } = useApp();
   const [activeFilter, setActiveFilter] = useState(defaultFilter);
 
   // Get cohort IDs
@@ -36,6 +36,13 @@ export const AdvisorODRequestsView: React.FC<AdvisorODRequestsViewProps> = ({
       case 'APPROVED': return <CheckCircle className="w-4 h-4 text-emerald-500" />;
       case 'REJECTED': return <XCircle className="w-4 h-4 text-red-500" />;
       default: return <Clock className="w-4 h-4 text-amber-500" />;
+    }
+  };
+
+  const handleDelete = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation(); // prevent opening details
+    if (window.confirm('Are you sure you want to permanently delete this OD request?')) {
+      await deleteODRequest(id);
     }
   };
 
@@ -88,7 +95,7 @@ export const AdvisorODRequestsView: React.FC<AdvisorODRequestsViewProps> = ({
             <div
               key={od.id}
               onClick={() => onSelectODRequest(od)}
-              className="p-4 sm:p-5 hover:bg-slate-50 transition-colors cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+              className="p-4 sm:p-5 hover:bg-slate-50 transition-colors cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-4 group"
             >
               <div className="space-y-1.5 min-w-0">
                 <div className="flex items-center gap-2.5 flex-wrap">
@@ -129,6 +136,15 @@ export const AdvisorODRequestsView: React.FC<AdvisorODRequestsViewProps> = ({
                     {od.advisor_status.toLowerCase()}
                   </span>
                 </div>
+                
+                <button
+                  onClick={(e) => handleDelete(e, od.id)}
+                  className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  title="Remove Request"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+
                 <ChevronRight className="w-4 h-4 text-slate-400" />
               </div>
             </div>

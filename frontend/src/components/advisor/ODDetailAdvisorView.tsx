@@ -15,7 +15,8 @@ import {
   ExternalLink,
   ShieldCheck,
   CheckCircle2,
-  Clock
+  Clock,
+  Trash2
 } from 'lucide-react';
 
 interface ODDetailAdvisorViewProps {
@@ -24,7 +25,7 @@ interface ODDetailAdvisorViewProps {
 }
 
 export const ODDetailAdvisorView: React.FC<ODDetailAdvisorViewProps> = ({ odRequest, onBack }) => {
-  const { odRequests, advisorReviewOD, advisorVerifyProof } = useApp();
+  const { odRequests, advisorReviewOD, advisorVerifyProof, deleteODRequest } = useApp();
 
   // Find live state from context
   const currentOD = odRequests.find((r) => r.id === odRequest.id) || odRequest;
@@ -33,6 +34,15 @@ export const ODDetailAdvisorView: React.FC<ODDetailAdvisorViewProps> = ({ odRequ
   const [remarksInput, setRemarksInput] = useState(currentOD.advisor_remarks || '');
   const [remarksError, setRemarksError] = useState(false);
   const [isActionPending, setIsActionPending] = useState(false);
+
+  const handleDelete = async () => {
+    if (confirm('Are you sure you want to delete this OD request? This action cannot be undone.')) {
+      setIsActionPending(true);
+      await deleteODRequest(currentOD.id);
+      setIsActionPending(false);
+      onBack();
+    }
+  };
 
   const handleApprove = async () => {
     setIsActionPending(true);
@@ -59,15 +69,27 @@ export const ODDetailAdvisorView: React.FC<ODDetailAdvisorViewProps> = ({ odRequ
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       
-      {/* Back Button */}
-      <button
-        id="btn-back-advisor-detail"
-        onClick={onBack}
-        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
-      >
-        <ArrowLeft className="w-4 h-4" />
-        <span>Back</span>
-      </button>
+      {/* Top Actions */}
+      <div className="flex items-center justify-between">
+        <button
+          id="btn-back-advisor-detail"
+          onClick={onBack}
+          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Back</span>
+        </button>
+
+        <button
+          id="btn-delete-od-request"
+          onClick={handleDelete}
+          disabled={isActionPending}
+          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border border-red-200 bg-red-50 text-xs font-semibold text-red-700 hover:bg-red-100 transition-colors cursor-pointer"
+        >
+          <Trash2 className="w-4 h-4" />
+          <span>Remove Request</span>
+        </button>
+      </div>
 
       {/* Main OD Info Card */}
       <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-6">

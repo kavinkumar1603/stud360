@@ -147,10 +147,10 @@ export const ODRequestsListView: React.FC<ODRequestsListViewProps> = ({
             onChange={(e) => setSelectedAY(e.target.value)}
             className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50/50 text-xs text-slate-700 font-medium focus:outline-none cursor-pointer"
           >
-            <option value="2023-2024">Academic Year: 2023-24</option>
-            <option value="2024-2025">Academic Year: 2024-25</option>
-            <option value="2025-2026">Academic Year: 2025-26</option>
             <option value="2026-2027">Academic Year: 2026-27</option>
+            <option value="2027-2028">Academic Year: 2027-28</option>
+            <option value="2028-2029">Academic Year: 2028-29</option>
+            <option value="2029-2030">Academic Year: 2029-30</option>
           </select>
 
           {/* Semester Select */}
