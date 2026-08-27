@@ -2,7 +2,49 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { useRouter } from 'next/navigation';
-import { GraduationCap, Lock, Mail, ArrowRight, AlertCircle, Quote } from 'lucide-react';
+import Image from 'next/image';
+import {
+  GraduationCap,
+  Lock,
+  IdCard,
+  ArrowRight,
+  AlertCircle,
+  Eye,
+  EyeOff,
+  FileText,
+  ShieldCheck,
+  CalendarClock,
+  BadgeCheck,
+  Loader2
+} from 'lucide-react';
+
+// clg_logo.webp is a 5650x1378 banner; request a small optimized render at that
+// aspect ratio so the login screen doesn't pull the full-size original.
+const LOGO_W = 328;
+const LOGO_H = 80;
+
+const HIGHLIGHTS = [
+  {
+    icon: FileText,
+    title: 'Apply for On-Duty',
+    copy: 'Raise individual or team OD requests with full event details in one form.'
+  },
+  {
+    icon: ShieldCheck,
+    title: 'Advisor approvals',
+    copy: 'Faculty advisors review, approve or reject requests from a single queue.'
+  },
+  {
+    icon: BadgeCheck,
+    title: 'Proof verification',
+    copy: 'Upload certificates after the event and track verification status live.'
+  },
+  {
+    icon: CalendarClock,
+    title: 'Deadline tracking',
+    copy: 'Never miss a submission window with advisor-published deadlines.'
+  }
+];
 
 export const LoginPage: React.FC = () => {
   const { login, addToast } = useApp();
@@ -10,6 +52,7 @@ export const LoginPage: React.FC = () => {
 
   const [credential, setCredential] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -48,10 +91,10 @@ export const LoginPage: React.FC = () => {
       sessionStorage.setItem('userRole', data.user.role);
 
       login(data.user.id, data.user.role);
-      
+
       const roleName = data.user.role === 'STUDENT' ? 'Student' : 'Faculty Advisor';
       addToast(`Logged in as ${roleName} (${data.user.name})`, 'success');
-      
+
       if (data.user.role === 'STUDENT') {
         router.push(`/${data.user.roll_no.toLowerCase()}`);
       } else {
@@ -65,155 +108,186 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex bg-white font-sans">
-      
-      {/* Left Side: Brand and Visuals (Hidden on mobile) */}
-      <div className="hidden lg:flex w-1/2 bg-indigo-900 relative overflow-hidden flex-col justify-between p-12 lg:p-20">
-        {/* Background Image & Overlays */}
-        <div 
-          className="absolute inset-0 bg-cover bg-center mix-blend-overlay opacity-40 transition-transform duration-1000 hover:scale-105"
-          style={{ backgroundImage: "url('https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=2000&q=80')" }}
-        ></div>
-        <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/90 via-indigo-900/90 to-slate-900/90"></div>
-        <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-indigo-400/20 via-transparent to-transparent"></div>
+    <div className="min-h-screen flex bg-[#F8FAFC] text-slate-900 font-sans">
 
-        {/* Brand Header */}
-        <div className="relative z-10 flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 shadow-xl">
-            <GraduationCap className="w-6 h-6 text-white" />
-          </div>
-          <span className="text-xl font-bold text-white tracking-tight">Stud360 Portal</span>
-        </div>
+      {/* ---------- Center: sign-in form ---------- */}
+      <div className="w-full flex flex-col items-center justify-center p-6 sm:p-10 relative">
 
-        {/* Decorative Quote / Copy */}
-        <div className="relative z-10 max-w-lg">
-          <Quote className="w-10 h-10 text-indigo-400/50 mb-6 rotate-180" />
-          <h1 className="text-4xl lg:text-5xl font-black text-white leading-tight mb-6 tracking-tight">
-            Elevate your academic journey.
-          </h1>
-          <p className="text-lg text-indigo-200/90 leading-relaxed font-medium">
-            A unified platform for students and advisors to effortlessly manage On-Duty leaves, certifications, and academic approvals.
-          </p>
-          
-          <div className="mt-12 flex items-center gap-4">
-            <div className="flex -space-x-3">
-              {[...Array(4)].map((_, i) => (
-                <div key={i} className="w-10 h-10 rounded-full border-2 border-indigo-900 bg-indigo-200 flex items-center justify-center overflow-hidden">
-                  <img src={`https://i.pravatar.cc/100?img=${i + 12}`} alt="User avatar" className="w-full h-full object-cover" />
-                </div>
-              ))}
-            </div>
-            <p className="text-sm font-semibold text-indigo-200">Joined by 2,000+ students & faculty</p>
-          </div>
-        </div>
-      </div>
+        {/* Ambient wash: decorative header on mobile, subtle tint on desktop */}
+        <div className="absolute inset-x-0 top-0 h-[40vh] bg-gradient-to-b from-blue-100/80 to-transparent pointer-events-none" />
 
-      {/* Right Side: Login Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 bg-white relative">
-        {/* Mobile decorative blobs */}
-        <div className="absolute top-0 left-0 w-full h-64 bg-indigo-50 rounded-b-[100px] lg:hidden -z-10"></div>
-        
-        <div className="w-full max-w-md space-y-8">
-          
-          {/* Mobile Branding (Only visible on small screens) */}
-          <div className="lg:hidden text-center space-y-4 mb-8">
-            <div className="mx-auto w-16 h-16 rounded-2xl bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-600/20">
-              <GraduationCap className="w-8 h-8 text-white" />
-            </div>
-            <h2 className="text-2xl font-black tracking-tight text-slate-900">Stud360</h2>
-          </div>
+        <div className="w-full max-w-[26rem] relative z-10 animate-rise">
 
-          <div className="text-center lg:text-left space-y-2">
-            <h2 className="text-3xl font-black text-slate-900 tracking-tight">Welcome back</h2>
-            <p className="text-sm text-slate-500 font-medium">Please enter your details to sign in.</p>
-          </div>
+          {/* Brand lockup */}
+          <div className="flex flex-col items-center text-center mb-10">
 
-          <form onSubmit={handleLoginSubmit} className="space-y-5 mt-8">
-            
-            {/* Error Banner */}
-            {errorMessage && (
-              <div className="p-4 rounded-xl bg-red-50 border border-red-100 text-red-600 text-sm font-semibold flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
-                <AlertCircle className="w-5 h-5 shrink-0" />
-                <span>{errorMessage}</span>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-md shadow-blue-500/20 shrink-0">
+                <GraduationCap className="w-6 h-6" />
               </div>
-            )}
+              <div className="text-left leading-tight">
+                <h1 className="text-lg font-extrabold tracking-tight text-slate-900">Stud360</h1>
+                <p className="text-[11px] font-bold uppercase tracking-widest text-blue-600">
+                  Academic OD Portal
+                </p>
+              </div>
+            </div>
+          </div>
 
-            <div className="space-y-4">
-              {/* Username field */}
+          {/* Form card */}
+          <div className="bg-white border border-slate-200/80 rounded-3xl shadow-xs p-7 sm:p-8">
+
+            <div className="space-y-1.5 mb-7">
+              <h2 className="text-2xl font-bold tracking-tight text-slate-900">Welcome back</h2>
+              <p className="text-xs text-slate-500 font-medium">
+                Sign in to manage your On-Duty requests and approvals.
+              </p>
+            </div>
+
+            <form onSubmit={handleLoginSubmit} className="space-y-5" noValidate>
+
+              {/* Error banner */}
+              {errorMessage && (
+                <div
+                  role="alert"
+                  aria-live="polite"
+                  className="p-3.5 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-xs font-semibold flex items-start gap-2.5 animate-shake"
+                >
+                  <AlertCircle className="w-4 h-4 shrink-0 mt-px" />
+                  <span className="leading-relaxed">{errorMessage}</span>
+                </div>
+              )}
+
+              {/* Credential */}
               <div className="space-y-1.5">
-                <label className="text-[13px] font-bold text-slate-700 tracking-wide">
-                  Email or Roll Number
+                <label
+                  htmlFor="login-credential"
+                  className="block text-[10px] font-bold uppercase tracking-widest text-slate-500"
+                >
+                  Roll Number or Email
                 </label>
                 <div className="relative group">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-indigo-600 transition-colors">
-                    <Mail className="w-5 h-5" />
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-600 transition-colors">
+                    <IdCard className="w-4.5 h-4.5" />
                   </div>
                   <input
+                    id="login-credential"
+                    name="username"
                     type="text"
+                    autoComplete="username"
+                    autoCapitalize="none"
+                    spellCheck={false}
                     required
                     value={credential}
                     onChange={(e) => {
                       setCredential(e.target.value);
                       if (errorMessage) setErrorMessage('');
                     }}
-                    placeholder="e.g. 22CS045 or faculty@college.edu"
-                    className="block w-full pl-11 pr-4 py-3.5 bg-slate-50 border-transparent rounded-xl text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-indigo-600 focus:ring-4 focus:ring-indigo-600/10 transition-all outline-none"
+                    placeholder="username"
+                    className="block w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200/80 rounded-xl text-sm font-medium text-slate-900 placeholder:text-slate-400 placeholder:font-normal hover:border-slate-300 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-600/10 transition-all outline-none"
                   />
                 </div>
               </div>
 
-              {/* Password field */}
+              {/* Password */}
               <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <label className="text-[13px] font-bold text-slate-700 tracking-wide">
+                <div className="flex items-center justify-between gap-3">
+                  <label
+                    htmlFor="login-password"
+                    className="block text-[10px] font-bold uppercase tracking-widest text-slate-500"
+                  >
                     Password
                   </label>
-                  <a href="#" className="text-[13px] font-bold text-indigo-600 hover:text-indigo-700 hover:underline">
+                  <a
+                    href="#"
+                    className="text-[11px] font-bold text-blue-600 hover:text-blue-700 hover:underline underline-offset-2"
+                  >
                     Forgot password?
                   </a>
                 </div>
                 <div className="relative group">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-indigo-600 transition-colors">
-                    <Lock className="w-5 h-5" />
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-600 transition-colors">
+                    <Lock className="w-4.5 h-4.5" />
                   </div>
                   <input
-                    type="password"
+                    id="login-password"
+                    name="password"
+                    type={showPassword ? 'text' : 'password'}
+                    autoComplete="current-password"
                     required
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="block w-full pl-11 pr-4 py-3.5 bg-slate-50 border-transparent rounded-xl text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-indigo-600 focus:ring-4 focus:ring-indigo-600/10 transition-all outline-none"
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      if (errorMessage) setErrorMessage('');
+                    }}
+                    placeholder="password"
+                    className="block w-full pl-11 pr-11 py-3 bg-slate-50 border border-slate-200/80 rounded-xl text-sm font-medium text-slate-900 placeholder:text-slate-400 placeholder:font-normal hover:border-slate-300 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-600/10 transition-all outline-none"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    aria-pressed={showPassword}
+                    className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+                  >
+                    {showPassword ? <EyeOff className="w-4.5 h-4.5" /> : <Eye className="w-4.5 h-4.5" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Submit */}
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-600/20 active:scale-[0.985] transition-all disabled:opacity-70 disabled:cursor-not-allowed disabled:active:scale-100 shadow-sm shadow-blue-600/25 cursor-pointer"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Signing in...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Sign In</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
+              </button>
+            </form>
+
+            {/* Role hint strip */}
+            <div className="mt-6 pt-5 border-t border-slate-100 grid grid-cols-2 gap-2.5">
+              <div className="flex items-center gap-2.5 rounded-xl bg-blue-50/70 border border-blue-100 px-3 py-2.5">
+                <GraduationCap className="w-4 h-4 text-blue-600 shrink-0" />
+                <div className="leading-tight min-w-0">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-blue-700">Student</p>
+                  <p className="text-[10px] text-slate-500 font-medium truncate">Use roll number</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2.5 rounded-xl bg-amber-50/70 border border-amber-100 px-3 py-2.5">
+                <ShieldCheck className="w-4 h-4 text-amber-600 shrink-0" />
+                <div className="leading-tight min-w-0">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-amber-700">Advisor</p>
+                  <p className="text-[10px] text-slate-500 font-medium truncate">Use email ID</p>
                 </div>
               </div>
             </div>
+          </div>
 
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 focus:ring-4 focus:ring-indigo-600/20 active:scale-[0.98] transition-all disabled:opacity-70 disabled:cursor-not-allowed shadow-md shadow-indigo-600/20 mt-6"
-            >
-              {isLoading ? (
-                <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-              ) : (
-                <>
-                  <span>Sign In to Dashboard</span>
-                  <ArrowRight className="w-4 h-4" />
-                </>
-              )}
-            </button>
-            
-          </form>
-
-          <p className="text-center text-[13px] text-slate-500 font-medium">
+          {/* Legal footer */}
+          <p className="text-center text-[11px] text-slate-400 font-medium mt-6 leading-relaxed">
             By signing in, you agree to our{' '}
-            <a href="#" className="text-slate-900 font-bold hover:underline">Terms of Service</a> and{' '}
-            <a href="#" className="text-slate-900 font-bold hover:underline">Privacy Policy</a>.
+            <a href="#" className="text-slate-600 font-semibold hover:text-slate-900 hover:underline underline-offset-2">
+              Terms of Service
+            </a>{' '}
+            and{' '}
+            <a href="#" className="text-slate-600 font-semibold hover:text-slate-900 hover:underline underline-offset-2">
+              Privacy Policy
+            </a>
+            .
           </p>
-
         </div>
       </div>
-
     </div>
   );
 };
