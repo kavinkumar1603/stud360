@@ -32,7 +32,7 @@ export const ODRequestsListView: React.FC<ODRequestsListViewProps> = ({
   const [activeTabFilter, setActiveTabFilter] = useState<'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED'>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedAY, setSelectedAY] = useState<string>('2026-2027');
-  const [selectedSem, setSelectedSem] = useState<string>('Fall');
+  const [selectedSem, setSelectedSem] = useState<string>('Semester 5');
 
   // Filter requests for current student
   const myODs = odRequests.filter(
@@ -120,7 +120,7 @@ export const ODRequestsListView: React.FC<ODRequestsListViewProps> = ({
           className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-sm flex items-center gap-2 cursor-pointer self-start sm:self-auto"
         >
           <Plus className="w-4 h-4" />
-          <span>+ New Request</span>
+          <span>+New Request</span>
         </button>
       </div>
 
@@ -159,8 +159,14 @@ export const ODRequestsListView: React.FC<ODRequestsListViewProps> = ({
             onChange={(e) => setSelectedSem(e.target.value)}
             className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50/50 text-xs text-slate-700 font-medium focus:outline-none cursor-pointer"
           >
-            <option value="Fall">Semester: Fall</option>
-            <option value="Spring">Semester: Spring</option>
+            <option value="Semester 1">Semester 1</option>
+            <option value="Semester 2">Semester 2</option>
+            <option value="Semester 3">Semester 3</option>
+            <option value="Semester 4">Semester 4</option>
+            <option value="Semester 5">Semester 5</option>
+            <option value="Semester 6">Semester 6</option>
+            <option value="Semester 7">Semester 7</option>
+            <option value="Semester 8">Semester 8</option>
           </select>
 
         </div>

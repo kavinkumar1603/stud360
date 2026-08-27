@@ -17,6 +17,7 @@ export const AdvisorODRequestsView: React.FC<AdvisorODRequestsViewProps> = ({
 }) => {
   const { currentAdvisor, odRequests, students, academicYear, semester, deleteODRequest } = useApp();
   const [activeFilter, setActiveFilter] = useState(defaultFilter);
+  const [activeType, setActiveType] = useState<'ALL' | 'INDIVIDUAL' | 'TEAM'>('ALL');
 
   // Get cohort IDs
   const myStudentIds = students.filter(s => s.advisor_id === currentAdvisor?.id).map(s => s.id);
@@ -27,8 +28,10 @@ export const AdvisorODRequestsView: React.FC<AdvisorODRequestsViewProps> = ({
   );
 
   const displayedRequests = allRequests.filter(od => {
-    if (activeFilter === 'ALL') return true;
-    return od.advisor_status === activeFilter;
+    if (activeFilter !== 'ALL' && od.advisor_status !== activeFilter) return false;
+    if (activeType === 'INDIVIDUAL' && od.request_type === 'Team') return false;
+    if (activeType === 'TEAM' && od.request_type !== 'Team') return false;
+    return true;
   });
 
   const getStatusIcon = (status: string) => {
@@ -50,18 +53,34 @@ export const AdvisorODRequestsView: React.FC<AdvisorODRequestsViewProps> = ({
     <div className="space-y-6">
       
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-start justify-between">
         <div>
           <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
             <FileText className="w-5 h-5 text-blue-500" />
             OD Applications
           </h2>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-slate-500 mt-1 mb-4">
             Review and manage student OD requests
           </p>
+          
+          <div className="flex bg-slate-100 p-1 rounded-xl w-fit">
+            {['ALL', 'INDIVIDUAL', 'TEAM'].map((typeFilter) => (
+              <button
+                key={typeFilter}
+                onClick={() => setActiveType(typeFilter as any)}
+                className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  activeType === typeFilter
+                    ? 'bg-white text-slate-900 shadow-sm'
+                    : 'text-slate-500 hover:text-slate-700'
+                }`}
+              >
+                {typeFilter === 'ALL' ? 'All Types' : typeFilter === 'INDIVIDUAL' ? 'Individual' : 'Team'}
+              </button>
+            ))}
+          </div>
         </div>
 
-        <div className="flex bg-slate-100 p-1 rounded-xl">
+        <div className="flex bg-slate-100 p-1 rounded-xl self-start sm:self-center mt-4 sm:mt-0 shrink-0">
           {['ALL', 'PENDING', 'APPROVED', 'REJECTED'].map((filter) => (
             <button
               key={filter}
@@ -72,7 +91,7 @@ export const AdvisorODRequestsView: React.FC<AdvisorODRequestsViewProps> = ({
                   : 'text-slate-500 hover:text-slate-700'
               }`}
             >
-              {filter === 'ALL' ? 'All' : filter.charAt(0) + filter.slice(1).toLowerCase()}
+              {filter === 'ALL' ? 'All Status' : filter.charAt(0) + filter.slice(1).toLowerCase()}
             </button>
           ))}
         </div>
