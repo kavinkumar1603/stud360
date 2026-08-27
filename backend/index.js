@@ -18,6 +18,11 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret';
 
+// Health Check
+app.get('/', (req, res) => {
+  res.json({ status: 'ok', message: 'Backend is running on Vercel!' });
+});
+
 // Auth Login
 app.post('/api/auth/login', async (req, res) => {
   try {
