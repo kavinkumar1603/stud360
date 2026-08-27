@@ -9,7 +9,7 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT || 5000;
 
-app.use(cors());
+app.use(cors({ origin: process.env.FRONTEND_URL ? [process.env.FRONTEND_URL, 'http://localhost:3000'] : '*' }));
 app.use(express.json());
 
 const supabaseUrl = process.env.SUPABASE_URL || '';
@@ -185,6 +185,10 @@ app.delete('/api/deadlines/:id', async (req, res) => {
   }
 });
 
-app.listen(port, () => {
-  console.log(`Backend server running on port ${port}`);
-});
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(port, () => {
+    console.log(`Backend server running on port ${port}`);
+  });
+}
+
+export default app;
