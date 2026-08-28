@@ -88,13 +88,15 @@ app.get('/api/data', async (req, res) => {
       { data: advisorsData },
       { data: odData },
       { data: deadlinesData },
-      { data: classesData }
+      { data: classesData },
+      { data: leavesData }
     ] = await Promise.all([
       supabase.from('students').select('*'),
       supabase.from('advisors').select('*'),
       supabase.from('od_requests').select('*').order('created_at', { ascending: false }),
       supabase.from('deadlines').select('*').order('due_date', { ascending: true }),
-      supabase.from('classes').select('*').order('created_at', { ascending: true })
+      supabase.from('classes').select('*').order('created_at', { ascending: true }),
+      supabase.from('leave_applications').select('*').order('created_at', { ascending: false })
     ]);
 
     res.json({
@@ -102,7 +104,8 @@ app.get('/api/data', async (req, res) => {
       advisors: advisorsData || [],
       odRequests: odData || [],
       deadlines: deadlinesData || [],
-      classes: classesData || []
+      classes: classesData || [],
+      leaveApplications: leavesData || []
     });
   } catch (error) {
     console.error("Error fetching data:", error);
@@ -164,6 +167,39 @@ app.delete('/api/od-requests/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const { error } = await supabase.from('od_requests').delete().eq('id', id);
+    if (error) throw error;
+    res.json({ message: 'Deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/leave-applications', async (req, res) => {
+  try {
+    const { data: inserted, error } = await supabase.from('leave_applications').insert(req.body).select().single();
+    if (error) throw error;
+    res.json(inserted);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.put('/api/leave-applications/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updates = req.body;
+    const { data: updated, error } = await supabase.from('leave_applications').update(updates).eq('id', id).select().single();
+    if (error) throw error;
+    res.json(updated);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.delete('/api/leave-applications/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { error } = await supabase.from('leave_applications').delete().eq('id', id);
     if (error) throw error;
     res.json({ message: 'Deleted successfully' });
   } catch (error) {

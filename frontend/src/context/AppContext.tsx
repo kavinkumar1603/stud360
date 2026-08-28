@@ -12,7 +12,10 @@ import {
   Student,
   UserRole,
   Deadline,
-  Class
+  Class,
+  LeaveApplication,
+  LeaveType,
+  ScholarType
 } from '../types';
 
 export interface ToastMessage {
@@ -61,6 +64,10 @@ interface AppContextType {
   addDeadline: (data: { title: string; description?: string; due_date: string }) => Promise<void>;
   deleteODRequest: (id: string) => Promise<void>;
   deleteDeadline: (id: string) => Promise<void>;
+  leaveApplications: LeaveApplication[];
+  addLeaveApplication: (data: { leave_type: LeaveType; scholar_type: ScholarType; semester: Semester; from_date?: string; to_date?: string; on_date?: string; no_of_days: number; purpose: string }) => Promise<void>;
+  advisorReviewLeave: (id: string, status: AdvisorStatus) => Promise<void>;
+  deleteLeaveApplication: (id: string) => Promise<void>;
   resetToDefaultData: () => void;
 }
 
@@ -83,6 +90,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [currentAdvisor, setCurrentAdvisor] = useState<Advisor>({} as Advisor);
 
   const [odRequests, setOdRequests] = useState<ODRequest[]>([]);
+  const [leaveApplications, setLeaveApplications] = useState<LeaveApplication[]>([]);
   const [deadlines, setDeadlines] = useState<Deadline[]>([]);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
@@ -97,6 +105,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (data.students) setStudents(data.students);
         if (data.advisors) setAdvisors(data.advisors);
         if (data.classes) setClasses(data.classes);
+        if (data.leaveApplications) setLeaveApplications(data.leaveApplications);
         if (data.odRequests) {
           const mapped = data.odRequests.map((od: any) => ({
             ...od,
@@ -155,6 +164,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             academic_year: od.academic_year === '2024-2025' ? '2026-2027' : od.academic_year
           }));
           setOdRequests(prev => JSON.stringify(prev) !== JSON.stringify(mapped) ? mapped : prev);
+        }
+        if (data.leaveApplications) {
+          setLeaveApplications(prev => JSON.stringify(prev) !== JSON.stringify(data.leaveApplications) ? data.leaveApplications : prev);
         }
       } catch (err) {
         console.error("Error polling for updates:", err);
@@ -476,6 +488,65 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  const addLeaveApplication = async (data: { leave_type: LeaveType; scholar_type: ScholarType; semester: Semester; from_date?: string; to_date?: string; on_date?: string; no_of_days: number; purpose: string }) => {
+    if (!currentStudent?.id) return;
+    
+    const newLeave = {
+      student_id: currentStudent.id,
+      student_name: currentStudent.name,
+      student_roll: currentStudent.roll_no,
+      advisor_id: currentStudent.advisor_id,
+      ...data,
+      advisor_status: 'PENDING'
+    };
+
+    try {
+      const res = await fetch(`${API_URL}/leave-applications`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newLeave)
+      });
+      if (!res.ok) throw new Error('Failed to save');
+      const inserted = await res.json();
+      setLeaveApplications(prev => [inserted, ...prev]);
+      addToast('Leave application sent to your advisor', 'success');
+    } catch (error) {
+      addToast('Error saving leave application', 'error');
+      console.error(error);
+    }
+  };
+
+  const advisorReviewLeave = async (id: string, status: AdvisorStatus) => {
+    try {
+      const res = await fetch(`${API_URL}/leave-applications/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ advisor_status: status })
+      });
+      if (!res.ok) throw new Error('Failed to update');
+      const updated = await res.json();
+      setLeaveApplications(prev => prev.map(l => l.id === id ? updated : l));
+      addToast(`Leave Application ${status}`, 'success');
+    } catch (error) {
+      addToast('Error updating leave application', 'error');
+      console.error(error);
+    }
+  };
+
+  const deleteLeaveApplication = async (id: string) => {
+    try {
+      const res = await fetch(`${API_URL}/leave-applications/${id}`, {
+        method: 'DELETE'
+      });
+      if (!res.ok) throw new Error('Failed to delete');
+      setLeaveApplications(prev => prev.filter(l => l.id !== id));
+      addToast('Leave application deleted', 'info');
+    } catch (error) {
+      addToast('Error deleting leave application', 'error');
+      console.error(error);
+    }
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -511,6 +582,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         addDeadline,
         deleteODRequest,
         deleteDeadline,
+        leaveApplications,
+        addLeaveApplication,
+        advisorReviewLeave,
+        deleteLeaveApplication,
         resetToDefaultData
       }}
     >

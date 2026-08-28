@@ -48,7 +48,26 @@ export interface ODRequest {
   created_at: string;
 }
 
+export type LeaveType = 'Personal' | 'Medical';
+export type ScholarType = 'Day Scholar' | 'Hosteller';
 
+export interface LeaveApplication {
+  id: string;
+  student_id: string;
+  student_name: string;
+  student_roll: string;
+  advisor_id: string;
+  leave_type: LeaveType;
+  scholar_type: ScholarType;
+  semester: Semester;
+  from_date?: string;
+  to_date?: string;
+  on_date?: string;
+  no_of_days: number;
+  purpose: string;
+  advisor_status: AdvisorStatus;
+  created_at: string;
+}
 
 export interface Deadline {
   id: string;

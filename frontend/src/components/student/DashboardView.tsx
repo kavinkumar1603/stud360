@@ -58,23 +58,34 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   return (
     <div className="space-y-6">
       
-      {/* Top Title & Primary Action Buttons (Matching Screenshot 4) */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      {/* Welcome Section */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Student Dashboard</h1>
-          <p className="text-xs text-slate-500 font-medium mt-0.5">
-            Overview of your academic requests and progress.
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+            Welcome back, {currentStudent?.name?.split(' ')[0] || 'Student'}
+          </h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            {currentStudent?.roll_no} • {currentStudent?.department}
           </p>
         </div>
-
-        <div className="flex items-center gap-3">
+        <div className="flex gap-2">
           <button
-            id="btn-dashboard-apply-od"
             onClick={onOpenApplyOD}
-            className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-sm flex items-center gap-2 cursor-pointer"
+            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm shadow-indigo-200 dark:shadow-none"
           >
             <Plus className="w-4 h-4" />
-            <span>Apply for OD</span>
+            <span>Apply OD</span>
+          </button>
+          <button
+            onClick={() => {
+              // Dispatch a custom event to open the leave modal
+              const event = new CustomEvent('open-apply-leave');
+              window.dispatchEvent(event);
+            }}
+            className="flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm shadow-teal-200 dark:shadow-none"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Apply Leave</span>
           </button>
         </div>
       </div>

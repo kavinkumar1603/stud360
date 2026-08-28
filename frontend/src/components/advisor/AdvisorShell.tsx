@@ -12,14 +12,16 @@ import { Clock, Users, ShieldCheck } from 'lucide-react';
 type AdvisorTab = 'pending' | 'students';
 
 export const AdvisorShell: React.FC = () => {
-  const { currentAdvisor, odRequests } = useApp();
+  const { currentAdvisor, odRequests, leaveApplications } = useApp();
   const [activeTab, setActiveTab] = useState<AdvisorTab>('pending');
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [selectedOD, setSelectedOD] = useState<ODRequest | null>(null);
 
   const pendingCount = odRequests.filter(
     (od) => od.advisor_id === currentAdvisor.id && od.advisor_status === 'PENDING'
-  ).length;
+  ).length + (leaveApplications?.filter(
+    (l) => l.advisor_id === currentAdvisor.id && l.advisor_status === 'PENDING'
+  )?.length || 0);
 
   return (
     <div className="min-h-screen bg-[#F9FAFB] dark:bg-slate-950 text-[#111827] dark:text-slate-100 pb-20">

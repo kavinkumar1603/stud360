@@ -8,8 +8,11 @@ import { StudentProfileView } from './StudentProfileView';
 import { ApplyODModal } from './ApplyODModal';
 import { ODRequest } from '../../types';
 import { LayoutDashboard, FileText, User, Plus } from 'lucide-react';
+import { ApplyLeaveModal } from './ApplyLeaveModal';
+import { LeaveApplicationsListView } from './LeaveApplicationsListView';
+import { Briefcase } from 'lucide-react';
 
-type StudentTab = 'dashboard' | 'requests' | 'profile';
+type StudentTab = 'dashboard' | 'requests' | 'leaves' | 'profile';
 
 export const StudentShell: React.FC = () => {
   const [activeTab, setActiveTab] = useState<StudentTab>('dashboard');
@@ -17,6 +20,13 @@ export const StudentShell: React.FC = () => {
 
   // Modal states
   const [isApplyODOpen, setIsApplyODOpen] = useState(false);
+  const [isApplyLeaveOpen, setIsApplyLeaveOpen] = useState(false);
+
+  React.useEffect(() => {
+    const handleOpenLeave = () => setIsApplyLeaveOpen(true);
+    window.addEventListener('open-apply-leave', handleOpenLeave);
+    return () => window.removeEventListener('open-apply-leave', handleOpenLeave);
+  }, []);
 
   const handleSelectOD = (od: ODRequest) => {
     setSelectedOD(od);
@@ -52,6 +62,8 @@ export const StudentShell: React.FC = () => {
               onSelectODRequest={handleSelectOD} 
               onOpenApplyOD={() => setIsApplyODOpen(true)} 
             />
+          ) : activeTab === 'leaves' ? (
+            <LeaveApplicationsListView />
           ) : activeTab === 'profile' ? (
             <StudentProfileView />
           ) : null}
@@ -88,7 +100,22 @@ export const StudentShell: React.FC = () => {
           }`}
         >
           <FileText className="w-5 h-5" />
-          <span>Requests</span>
+          <span>OD Requests</span>
+        </button>
+        <button
+          id="mobile-nav-leaves"
+          onClick={() => {
+            setActiveTab('leaves');
+            setSelectedOD(null);
+          }}
+          className={`flex flex-col items-center justify-center gap-1 text-[11px] font-semibold transition-colors ${
+            activeTab === 'leaves' && !selectedOD
+              ? 'text-teal-600'
+              : 'text-gray-500 hover:text-gray-900'
+          }`}
+        >
+          <Briefcase className="w-5 h-5" />
+          <span>Leaves</span>
         </button>
         <button
           id="mobile-nav-profile"
@@ -113,6 +140,14 @@ export const StudentShell: React.FC = () => {
         onClose={() => setIsApplyODOpen(false)}
         onSubmitted={() => {
           setActiveTab('requests');
+          setSelectedOD(null);
+        }}
+      />
+      <ApplyLeaveModal
+        isOpen={isApplyLeaveOpen}
+        onClose={() => setIsApplyLeaveOpen(false)}
+        onSubmitted={() => {
+          setActiveTab('leaves');
           setSelectedOD(null);
         }}
       />

@@ -15,9 +15,10 @@ export const AdvisorODRequestsView: React.FC<AdvisorODRequestsViewProps> = ({
   onSelectODRequest,
   defaultFilter = 'PENDING'
 }) => {
-  const { currentAdvisor, odRequests, students, deleteODRequest } = useApp();
+  const { currentAdvisor, odRequests, students, deleteODRequest, advisorReviewLeave, deleteLeaveApplication } = useApp();
   const [activeFilter, setActiveFilter] = useState(defaultFilter);
   const [activeType, setActiveType] = useState<'ALL' | 'INDIVIDUAL' | 'TEAM'>('ALL');
+  const [viewMode, setViewMode] = useState<'OD' | 'LEAVE'>('OD');
   
   // New state for AY and Semester filters
   const [selectedAY, setSelectedAY] = useState<string>('ALL');
@@ -30,6 +31,10 @@ export const AdvisorODRequestsView: React.FC<AdvisorODRequestsViewProps> = ({
   const allRequests = odRequests.filter(
     (od) => myStudentIds.includes(od.student_id)
   );
+  
+  const allLeaveRequests = useApp().leaveApplications?.filter(
+    (l) => l.advisor_id === currentAdvisor?.id
+  ) || [];
 
   const displayedRequests = allRequests.filter(od => {
     if (activeFilter !== 'ALL' && od.advisor_status !== activeFilter) return false;
@@ -37,6 +42,12 @@ export const AdvisorODRequestsView: React.FC<AdvisorODRequestsViewProps> = ({
     if (activeType === 'TEAM' && od.request_type !== 'Team') return false;
     if (selectedAY !== 'ALL' && od.academic_year !== selectedAY) return false;
     if (selectedSem !== 'ALL' && od.semester !== selectedSem) return false;
+    return true;
+  });
+
+  const displayedLeaves = allLeaveRequests.filter(l => {
+    if (activeFilter !== 'ALL' && l.advisor_status !== activeFilter) return false;
+    if (selectedSem !== 'ALL' && l.semester !== selectedSem) return false;
     return true;
   });
 
@@ -64,17 +75,37 @@ export const AdvisorODRequestsView: React.FC<AdvisorODRequestsViewProps> = ({
           <div>
             <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
               <FileText className="w-5 h-5 text-blue-500" />
-              OD Applications
+              {viewMode === 'OD' ? 'OD Applications' : 'Leave Applications'}
             </h2>
             <p className="text-xs text-slate-500 mt-1 mb-4">
-              Review and manage student OD requests
+              Review and manage student {viewMode === 'OD' ? 'OD' : 'Leave'} requests
             </p>
             
-            <div className="flex bg-slate-100 p-1 rounded-xl w-fit">
-              {['ALL', 'INDIVIDUAL', 'TEAM'].map((typeFilter) => (
-                <button
-                  key={typeFilter}
-                  onClick={() => setActiveType(typeFilter as any)}
+            <div className="flex bg-slate-100 p-1 rounded-xl w-fit mb-2">
+              <button
+                onClick={() => setViewMode('OD')}
+                className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  viewMode === 'OD' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                }`}
+              >
+                OD Requests
+              </button>
+              <button
+                onClick={() => setViewMode('LEAVE')}
+                className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  viewMode === 'LEAVE' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                }`}
+              >
+                Leave Requests
+              </button>
+            </div>
+            
+            {viewMode === 'OD' && (
+              <div className="flex bg-slate-100 p-1 rounded-xl w-fit">
+                {['ALL', 'INDIVIDUAL', 'TEAM'].map((typeFilter) => (
+                  <button
+                    key={typeFilter}
+                    onClick={() => setActiveType(typeFilter as any)}
                   className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
                     activeType === typeFilter
                       ? 'bg-white text-slate-900 shadow-sm'
@@ -84,7 +115,8 @@ export const AdvisorODRequestsView: React.FC<AdvisorODRequestsViewProps> = ({
                   {typeFilter === 'ALL' ? 'All Types' : typeFilter === 'INDIVIDUAL' ? 'Individual' : 'Team'}
                 </button>
               ))}
-            </div>
+              </div>
+            )}
           </div>
 
           <div className="flex flex-col gap-3 shrink-0">
@@ -132,17 +164,18 @@ export const AdvisorODRequestsView: React.FC<AdvisorODRequestsViewProps> = ({
       </div>
 
       {/* List or Empty State */}
-      {displayedRequests.length === 0 ? (
-        <div className="bg-white border border-slate-200 rounded-2xl p-12 text-center space-y-3 shadow-xs">
-          <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-400 mx-auto flex items-center justify-center">
-            <CheckCircle2 className="w-6 h-6" />
+      {viewMode === 'OD' ? (
+        displayedRequests.length === 0 ? (
+          <div className="bg-white border border-slate-200 rounded-2xl p-12 text-center space-y-3 shadow-xs">
+            <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-400 mx-auto flex items-center justify-center">
+              <CheckCircle2 className="w-6 h-6" />
+            </div>
+            <h3 className="text-base font-bold text-slate-900">No {activeFilter === 'ALL' ? '' : activeFilter.toLowerCase()} requests found</h3>
+            <p className="text-xs text-slate-500 max-w-sm mx-auto">
+              There are currently no OD applications matching this filter for your cohort.
+            </p>
           </div>
-          <h3 className="text-base font-bold text-slate-900">No {activeFilter === 'ALL' ? '' : activeFilter.toLowerCase()} requests found</h3>
-          <p className="text-xs text-slate-500 max-w-sm mx-auto">
-            There are currently no OD applications matching this filter for your cohort.
-          </p>
-        </div>
-      ) : (
+        ) : (
         <div className="bg-white border border-slate-200 rounded-2xl divide-y divide-slate-100 shadow-xs overflow-hidden">
           {displayedRequests.map((od) => (
             <div
@@ -203,6 +236,88 @@ export const AdvisorODRequestsView: React.FC<AdvisorODRequestsViewProps> = ({
             </div>
           ))}
         </div>
+        )
+      ) : (
+        displayedLeaves.length === 0 ? (
+          <div className="bg-white border border-slate-200 rounded-2xl p-12 text-center space-y-3 shadow-xs">
+            <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-400 mx-auto flex items-center justify-center">
+              <CheckCircle2 className="w-6 h-6" />
+            </div>
+            <h3 className="text-base font-bold text-slate-900">No {activeFilter === 'ALL' ? '' : activeFilter.toLowerCase()} requests found</h3>
+            <p className="text-xs text-slate-500 max-w-sm mx-auto">
+              There are currently no Leave applications matching this filter.
+            </p>
+          </div>
+        ) : (
+          <div className="bg-white border border-slate-200 rounded-2xl divide-y divide-slate-100 shadow-xs overflow-hidden">
+            {displayedLeaves.map((l) => (
+              <div
+                key={l.id}
+                className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 group"
+              >
+                <div className="space-y-1.5 min-w-0">
+                  <div className="flex items-center gap-2.5 flex-wrap">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-700">
+                      <User className="w-3 h-3" />
+                      {l.leave_type} Leave
+                    </span>
+                    <h3 className="text-base font-bold text-slate-900 truncate">
+                      {l.student_name} ({l.student_roll})
+                    </h3>
+                  </div>
+                  <p className="text-xs text-slate-500 flex items-center gap-2 flex-wrap">
+                    <span className="font-semibold text-slate-800">
+                      {l.scholar_type}
+                    </span>
+                    <span>•</span>
+                    <span>{l.from_date ? `${l.from_date} to ${l.to_date}` : l.on_date} ({l.no_of_days} Days)</span>
+                    <span>•</span>
+                    <span>{l.purpose}</span>
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                  {l.advisor_status === 'PENDING' ? (
+                    <>
+                      <button
+                        onClick={() => advisorReviewLeave(l.id, 'APPROVED')}
+                        className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-colors"
+                      >
+                        Approve
+                      </button>
+                      <button
+                        onClick={() => advisorReviewLeave(l.id, 'REJECTED')}
+                        className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold transition-colors"
+                      >
+                        Reject
+                      </button>
+                    </>
+                  ) : (
+                    <div className="flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-bold capitalize bg-white shadow-sm">
+                      {getStatusIcon(l.advisor_status)}
+                      <span className={
+                        l.advisor_status === 'APPROVED' ? 'text-emerald-700' :
+                        l.advisor_status === 'REJECTED' ? 'text-red-700' : 'text-amber-700'
+                      }>
+                        {l.advisor_status.toLowerCase()}
+                      </span>
+                    </div>
+                  )}
+                  <button
+                    onClick={(e) => {
+                      if (window.confirm('Are you sure you want to permanently delete this leave application?')) {
+                        deleteLeaveApplication(l.id);
+                      }
+                    }}
+                    className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors ml-2"
+                    title="Remove Request"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )
       )}
 
     </div>
