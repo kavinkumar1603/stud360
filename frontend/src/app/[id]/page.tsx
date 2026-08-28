@@ -11,13 +11,15 @@ import { ApplyLeaveModal } from '@/components/student/ApplyLeaveModal';
 import { LeaveApplicationsListView } from '@/components/student/LeaveApplicationsListView';
 import { MyStudentsView } from '@/components/advisor/MyStudentsView';
 import { AdvisorODRequestsView } from '@/components/advisor/AdvisorODRequestsView';
+import { AdvisorLeaveRequestsView } from '@/components/advisor/AdvisorLeaveRequestsView';
 import { StudentProfileAdvisorView } from '@/components/advisor/StudentProfileAdvisorView';
 import { ODDetailAdvisorView } from '@/components/advisor/ODDetailAdvisorView';
 import { AdvisorProfileView } from '@/components/advisor/AdvisorProfileView';
 import { AdvisorDashboardView } from '@/components/advisor/AdvisorDashboardView';
 import { ManageDeadlinesView } from '@/components/advisor/ManageDeadlinesView';
 import { AdvisorODProofsView } from '@/components/advisor/AdvisorODProofsView';
-import { ODRequest, Student } from '@/types';
+import { LeaveDetailAdvisorView } from '@/components/advisor/LeaveDetailAdvisorView';
+import { ODRequest, Student, LeaveApplication } from '@/types';
 import { Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
@@ -28,6 +30,7 @@ export default function DashboardRoute({ params }: { params: Promise<{ id: strin
 
   const [activeTab, setActiveTab] = useState<NavTab>(role === 'ADVISOR' ? 'advisor_dashboard' : 'student_dashboard');
   const [selectedOD, setSelectedOD] = useState<ODRequest | null>(null);
+  const [selectedLeave, setSelectedLeave] = useState<LeaveApplication | null>(null);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [advisorReqFilter, setAdvisorReqFilter] = useState<'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED'>('PENDING');
 
@@ -106,7 +109,9 @@ export default function DashboardRoute({ params }: { params: Promise<{ id: strin
 
   return (
     <SidebarLayout activeTab={activeTab} setActiveTab={handleTabChange}>
-      {selectedOD ? (
+      {selectedLeave && role === 'ADVISOR' ? (
+        <LeaveDetailAdvisorView leaveApplication={selectedLeave} onBack={() => setSelectedLeave(null)} />
+      ) : selectedOD ? (
         role === 'ADVISOR' ? (
           <ODDetailAdvisorView odRequest={selectedOD} onBack={() => setSelectedOD(null)} />
         ) : (
@@ -157,6 +162,8 @@ export default function DashboardRoute({ params }: { params: Promise<{ id: strin
         <MyStudentsView onSelectStudent={(st) => setSelectedStudent(st)} />
       ) : activeTab === 'advisor_requests' && role === 'ADVISOR' ? (
         <AdvisorODRequestsView onSelectODRequest={(od) => setSelectedOD(od)} defaultFilter={advisorReqFilter} />
+      ) : activeTab === 'advisor_leaves' && role === 'ADVISOR' ? (
+        <AdvisorLeaveRequestsView onSelectLeaveRequest={(l) => setSelectedLeave(l)} defaultFilter={advisorReqFilter} />
       ) : activeTab === 'advisor_deadlines' && role === 'ADVISOR' ? (
         <ManageDeadlinesView />
       ) : activeTab === 'advisor_proofs' && role === 'ADVISOR' ? (

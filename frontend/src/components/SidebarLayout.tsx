@@ -27,6 +27,7 @@ export type NavTab =
   | 'advisor_students'
   | 'advisor_deadlines'
   | 'advisor_requests'
+  | 'advisor_leaves'
   | 'advisor_proofs';
 
 interface SidebarLayoutProps {
@@ -54,6 +55,7 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({
     students,
     advisors,
     odRequests,
+    leaveApplications,
     resetToDefaultData
   } = useApp();
 
@@ -62,6 +64,10 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({
   // Pending OD count for advisor badge
   const pendingAdvisorCount = odRequests.filter(
     (od) => od.advisor_id === currentAdvisor.id && od.advisor_status === 'PENDING'
+  ).length;
+
+  const pendingLeaveCount = (leaveApplications || []).filter(
+    (l) => l.advisor_id === currentAdvisor.id && l.advisor_status === 'PENDING'
   ).length;
 
   const handleNavClick = (tab: NavTab) => {
@@ -237,6 +243,28 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({
                     activeTab === 'advisor_requests' ? 'bg-white text-amber-800' : 'bg-amber-100 text-amber-800'
                   }`}>
                     {pendingAdvisorCount}
+                  </span>
+                )}
+              </button>
+
+              <button
+                id="nav-advisor-leaves"
+                onClick={() => handleNavClick('advisor_leaves')}
+                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                  activeTab === 'advisor_leaves'
+                    ? 'bg-amber-600 text-white shadow-sm font-bold'
+                    : 'text-slate-600 hover:bg-amber-50 hover:text-amber-900'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <Briefcase className={`w-4 h-4 ${activeTab === 'advisor_leaves' ? 'text-white' : 'text-amber-500'}`} />
+                  <span>Leave Applications</span>
+                </div>
+                {pendingLeaveCount > 0 && (
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                    activeTab === 'advisor_leaves' ? 'bg-white text-amber-800' : 'bg-amber-100 text-amber-800'
+                  }`}>
+                    {pendingLeaveCount}
                   </span>
                 )}
               </button>

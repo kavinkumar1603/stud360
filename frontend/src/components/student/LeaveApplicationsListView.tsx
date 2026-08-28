@@ -69,36 +69,72 @@ export const LeaveApplicationsListView: React.FC<LeaveApplicationsListViewProps>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* Table View */}
+      <div className="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden">
         {filteredLeaves.length === 0 ? (
-          <div className="col-span-full py-12 text-center text-slate-500 text-sm">No leave applications found.</div>
+          <div className="p-12 text-center space-y-3">
+            <p className="text-xs text-slate-500 font-medium">No leave applications found matching this filter.</p>
+            <button
+              onClick={onOpenApplyLeave}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-teal-600 text-white text-xs font-bold hover:bg-teal-700 cursor-pointer"
+            >
+              <Plus className="w-3.5 h-3.5" /> Apply for Leave
+            </button>
+          </div>
         ) : (
-          filteredLeaves.map((l) => (
-            <div key={l.id} className="bg-white  border border-slate-200  rounded-2xl p-5 hover:border-teal-300 transition-colors shadow-sm">
-              <div className="flex justify-between items-start mb-4">
-                <div>
-                  <h3 className="text-sm font-bold text-slate-900 ">{l.leave_type} Leave</h3>
-                  <p className="text-[11px] text-slate-500 font-medium mt-1 flex items-center gap-1">
-                    <Calendar className="w-3 h-3" />
-                    {l.from_date ? `${l.from_date} to ${l.to_date}` : l.on_date} &bull; {l.no_of_days} Day(s)
-                  </p>
-                </div>
-                <div className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold ${
-                  l.advisor_status === 'APPROVED' ? 'bg-emerald-100 text-emerald-800' :
-                  l.advisor_status === 'REJECTED' ? 'bg-rose-100 text-rose-800' :
-                  'bg-amber-100 text-amber-800'
-                }`}>
-                  {l.advisor_status === 'APPROVED' && <CheckCircle2 className="w-3 h-3" />}
-                  {l.advisor_status === 'REJECTED' && <XCircle className="w-3 h-3" />}
-                  {l.advisor_status === 'PENDING' && <Clock className="w-3 h-3" />}
-                  <span>{l.advisor_status}</span>
-                </div>
-              </div>
-              <p className="text-xs text-slate-600  bg-slate-50  p-3 rounded-xl border border-slate-100  line-clamp-2">
-                {l.purpose}
-              </p>
-            </div>
-          ))
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-slate-200 bg-slate-50/50 text-[10px] uppercase font-bold text-slate-400 tracking-wider">
+                  <th className="py-3 px-6">Leave Type</th>
+                  <th className="py-3 px-6">Purpose</th>
+                  <th className="py-3 px-6">Date Range</th>
+                  <th className="py-3 px-6 text-right">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-xs">
+                {filteredLeaves.map((l) => (
+                  <tr key={l.id} className="hover:bg-slate-50/80 transition-colors">
+                    {/* LEAVE TYPE */}
+                    <td className="py-4 px-6">
+                      <div className="font-bold text-slate-900 text-xs">{l.leave_type} Leave</div>
+                      <div className="text-[11px] text-slate-400 mt-0.5">{l.scholar_type}</div>
+                    </td>
+
+                    {/* PURPOSE */}
+                    <td className="py-4 px-6">
+                      <div className="text-slate-600 line-clamp-2 max-w-xs">{l.purpose}</div>
+                    </td>
+
+                    {/* DATE RANGE */}
+                    <td className="py-4 px-6">
+                      <div className="font-semibold text-slate-800">
+                        {l.from_date ? `${l.from_date} to ${l.to_date}` : l.on_date}
+                      </div>
+                      <div className="text-[11px] text-slate-400 mt-0.5 flex items-center gap-1">
+                        <Calendar className="w-3 h-3" />
+                        {l.no_of_days} Day(s)
+                      </div>
+                    </td>
+
+                    {/* STATUS */}
+                    <td className="py-4 px-6 text-right">
+                      <div className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold ${
+                        l.advisor_status === 'APPROVED' ? 'bg-emerald-100 text-emerald-800' :
+                        l.advisor_status === 'REJECTED' ? 'bg-rose-100 text-rose-800' :
+                        'bg-amber-100 text-amber-800'
+                      }`}>
+                        {l.advisor_status === 'APPROVED' && <CheckCircle2 className="w-3 h-3" />}
+                        {l.advisor_status === 'REJECTED' && <XCircle className="w-3 h-3" />}
+                        {l.advisor_status === 'PENDING' && <Clock className="w-3 h-3" />}
+                        <span>{l.advisor_status}</span>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
     </div>
