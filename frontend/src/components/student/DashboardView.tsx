@@ -21,12 +21,14 @@ import {
 
 interface DashboardViewProps {
   onOpenApplyOD: () => void;
+  onOpenApplyLeave: () => void;
   onSelectODRequest: (od: ODRequest) => void;
   onNavigateTab: (tab: 'requests' ) => void;
 }
 
 export const DashboardView: React.FC<DashboardViewProps> = ({
   onOpenApplyOD,
+  onOpenApplyLeave,
   onSelectODRequest,
   onNavigateTab
 }) => {
@@ -77,11 +79,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <span>Apply OD</span>
           </button>
           <button
-            onClick={() => {
-              // Dispatch a custom event to open the leave modal
-              const event = new CustomEvent('open-apply-leave');
-              window.dispatchEvent(event);
-            }}
+            onClick={onOpenApplyLeave}
             className="flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm shadow-teal-200 dark:shadow-none"
           >
             <Plus className="w-4 h-4" />

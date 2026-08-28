@@ -7,6 +7,8 @@ import { ODRequestsListView } from '@/components/student/ODRequestsListView';
 import { ODDetailView } from '@/components/student/ODDetailView';
 import { StudentProfileView } from '@/components/student/StudentProfileView';
 import { ApplyODModal } from '@/components/student/ApplyODModal';
+import { ApplyLeaveModal } from '@/components/student/ApplyLeaveModal';
+import { LeaveApplicationsListView } from '@/components/student/LeaveApplicationsListView';
 import { MyStudentsView } from '@/components/advisor/MyStudentsView';
 import { AdvisorODRequestsView } from '@/components/advisor/AdvisorODRequestsView';
 import { StudentProfileAdvisorView } from '@/components/advisor/StudentProfileAdvisorView';
@@ -30,6 +32,7 @@ export default function DashboardRoute({ params }: { params: Promise<{ id: strin
   const [advisorReqFilter, setAdvisorReqFilter] = useState<'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED'>('PENDING');
 
   const [isApplyODOpen, setIsApplyODOpen] = useState(false);
+  const [isApplyLeaveOpen, setIsApplyLeaveOpen] = useState(false);
   // Sync tab state with browser history to fix back button bug
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -118,6 +121,7 @@ export default function DashboardRoute({ params }: { params: Promise<{ id: strin
       ) : activeTab === 'student_dashboard' ? (
         <DashboardView
           onOpenApplyOD={() => setIsApplyODOpen(true)}
+          onOpenApplyLeave={() => setIsApplyLeaveOpen(true)}
           onSelectODRequest={(od) => setSelectedOD(od)}
           onNavigateTab={(tab) => {
             if (tab === 'requests') setActiveTab('student_requests');
@@ -127,6 +131,10 @@ export default function DashboardRoute({ params }: { params: Promise<{ id: strin
         <ODRequestsListView
           onSelectODRequest={(od) => setSelectedOD(od)}
           onOpenApplyOD={() => setIsApplyODOpen(true)}
+        />
+      ) : activeTab === 'student_leaves' ? (
+        <LeaveApplicationsListView
+          onOpenApplyLeave={() => setIsApplyLeaveOpen(true)}
         />
       ) : activeTab === 'student_profile' ? (
         role === 'ADVISOR' ? <AdvisorProfileView /> : <StudentProfileView />
@@ -156,6 +164,7 @@ export default function DashboardRoute({ params }: { params: Promise<{ id: strin
       ) : (
         <DashboardView
           onOpenApplyOD={() => setIsApplyODOpen(true)}
+          onOpenApplyLeave={() => setIsApplyLeaveOpen(true)}
           onSelectODRequest={(od) => setSelectedOD(od)}
           onNavigateTab={(tab) => {
             if (tab === 'requests') setActiveTab('student_requests');
@@ -168,6 +177,14 @@ export default function DashboardRoute({ params }: { params: Promise<{ id: strin
         onClose={() => setIsApplyODOpen(false)}
         onSubmitted={() => {
           setActiveTab('student_requests');
+          setSelectedOD(null);
+        }}
+      />
+      <ApplyLeaveModal
+        isOpen={isApplyLeaveOpen}
+        onClose={() => setIsApplyLeaveOpen(false)}
+        onSubmitted={() => {
+          setActiveTab('student_leaves');
           setSelectedOD(null);
         }}
       />

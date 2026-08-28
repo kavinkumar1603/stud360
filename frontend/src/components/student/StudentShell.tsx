@@ -22,12 +22,6 @@ export const StudentShell: React.FC = () => {
   const [isApplyODOpen, setIsApplyODOpen] = useState(false);
   const [isApplyLeaveOpen, setIsApplyLeaveOpen] = useState(false);
 
-  React.useEffect(() => {
-    const handleOpenLeave = () => setIsApplyLeaveOpen(true);
-    window.addEventListener('open-apply-leave', handleOpenLeave);
-    return () => window.removeEventListener('open-apply-leave', handleOpenLeave);
-  }, []);
-
   const handleSelectOD = (od: ODRequest) => {
     setSelectedOD(od);
   };
@@ -54,6 +48,7 @@ export const StudentShell: React.FC = () => {
           ) : activeTab === 'dashboard' ? (
             <DashboardView 
               onOpenApplyOD={() => setIsApplyODOpen(true)}
+              onOpenApplyLeave={() => setIsApplyLeaveOpen(true)}
               onNavigateTab={(t) => setActiveTab(t as any)}
               onSelectODRequest={handleSelectOD}
             />
@@ -63,7 +58,9 @@ export const StudentShell: React.FC = () => {
               onOpenApplyOD={() => setIsApplyODOpen(true)} 
             />
           ) : activeTab === 'leaves' ? (
-            <LeaveApplicationsListView />
+            <LeaveApplicationsListView 
+              onOpenApplyLeave={() => setIsApplyLeaveOpen(true)} 
+            />
           ) : activeTab === 'profile' ? (
             <StudentProfileView />
           ) : null}

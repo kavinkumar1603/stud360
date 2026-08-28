@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import { X } from 'lucide-react';
+import { X, Briefcase } from 'lucide-react';
 import { LeaveType, ScholarType, Semester } from '../../types';
 
 interface ApplyLeaveModalProps {
@@ -41,6 +41,18 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({ isOpen, onClos
         no_of_days: Number(noOfDays),
         purpose
       });
+      
+      // Reset form
+      setLeaveType('Personal');
+      setScholarType('Day Scholar');
+      setSemester(currentStudent?.semester || 'Semester 5');
+      setIsMultiDay(false);
+      setFromDate('');
+      setToDate('');
+      setOnDate('');
+      setNoOfDays(1);
+      setPurpose('');
+
       onSubmitted();
       onClose();
     } catch (error) {
@@ -51,38 +63,54 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({ isOpen, onClos
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
-      <div className="flex min-h-screen items-center justify-center p-4">
-        <div className="fixed inset-0 bg-black/50 transition-opacity" onClick={onClose} />
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs overflow-y-auto">
+      <div className="bg-white border border-slate-200 rounded-2xl shadow-2xl max-w-xl w-full max-h-[90vh] flex flex-col overflow-hidden my-auto animate-in zoom-in-95 duration-150 relative">
         
-        <div className="relative bg-white dark:bg-slate-900 rounded-xl max-w-md w-full p-6 shadow-xl border border-gray-100 dark:border-slate-800">
-          <div className="flex justify-between items-center mb-5">
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white">Apply for Leave</h3>
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-500">
-              <X className="w-5 h-5" />
-            </button>
+        {/* Modal Header */}
+        <div className="flex items-center justify-between p-5 border-b border-slate-200 bg-slate-50 shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-teal-100 text-teal-600">
+              <Briefcase className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-slate-900">Apply for Leave</h2>
+              <p className="text-xs text-slate-500">
+                Submit a leave application to your faculty advisor
+              </p>
+            </div>
           </div>
+          <button
+            onClick={onClose}
+            className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-200 rounded-full transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Leave Type</label>
+        {/* Modal Body */}
+        <div className="p-6 overflow-y-auto custom-scrollbar">
+          <form id="apply-leave-form" onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-2 gap-5">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Leave Type <span className="text-red-500">*</span></label>
                 <select
+                  required
                   value={leaveType}
                   onChange={(e) => setLeaveType(e.target.value as LeaveType)}
-                  className="w-full text-sm rounded-lg border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-900 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-colors"
                 >
-                  <option value="Personal">Personal</option>
-                  <option value="Medical">Medical</option>
+                  <option value="Personal">Personal Leave</option>
+                  <option value="Medical">Medical Leave</option>
                 </select>
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Scholar Type</label>
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Scholar Type <span className="text-red-500">*</span></label>
                 <select
+                  required
                   value={scholarType}
                   onChange={(e) => setScholarType(e.target.value as ScholarType)}
-                  className="w-full text-sm rounded-lg border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-900 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-colors"
                 >
                   <option value="Day Scholar">Day Scholar</option>
                   <option value="Hosteller">Hosteller</option>
@@ -90,12 +118,13 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({ isOpen, onClos
               </div>
             </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Semester</label>
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Semester <span className="text-red-500">*</span></label>
               <select
+                required
                 value={semester}
                 onChange={(e) => setSemester(e.target.value as Semester)}
-                className="w-full text-sm rounded-lg border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-900 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-colors"
               >
                 {[...Array(8)].map((_, i) => (
                   <option key={i} value={`Semester ${i + 1}`}>Semester {i + 1}</option>
@@ -103,55 +132,58 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({ isOpen, onClos
               </select>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3 bg-slate-50 p-4 rounded-xl border border-slate-100">
               <input
                 type="checkbox"
                 id="isMultiDay"
                 checked={isMultiDay}
                 onChange={(e) => setIsMultiDay(e.target.checked)}
-                className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                className="w-4 h-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500"
               />
-              <label htmlFor="isMultiDay" className="text-sm text-gray-700 dark:text-gray-300">Multi-day Leave</label>
+              <div className="flex flex-col">
+                <label htmlFor="isMultiDay" className="text-sm font-bold text-slate-900 cursor-pointer">Multi-day Leave</label>
+                <span className="text-xs text-slate-500">Check this if your leave spans across multiple days</span>
+              </div>
             </div>
 
             {isMultiDay ? (
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">From Date</label>
+              <div className="grid grid-cols-2 gap-5">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">From Date <span className="text-red-500">*</span></label>
                   <input
                     type="date"
                     required
                     value={fromDate}
                     onChange={(e) => setFromDate(e.target.value)}
-                    className="w-full text-sm rounded-lg border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-900 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-colors"
                   />
                 </div>
-                <div>
-                  <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">To Date</label>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">To Date <span className="text-red-500">*</span></label>
                   <input
                     type="date"
                     required
                     value={toDate}
                     onChange={(e) => setToDate(e.target.value)}
-                    className="w-full text-sm rounded-lg border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-900 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-colors"
                   />
                 </div>
               </div>
             ) : (
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">On Date</label>
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Date of Leave <span className="text-red-500">*</span></label>
                 <input
                   type="date"
                   required
                   value={onDate}
                   onChange={(e) => setOnDate(e.target.value)}
-                  className="w-full text-sm rounded-lg border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-900 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-colors"
                 />
               </div>
             )}
 
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">No. of Days</label>
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">No. of Days <span className="text-red-500">*</span></label>
               <input
                 type="number"
                 required
@@ -159,40 +191,54 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({ isOpen, onClos
                 step="0.5"
                 value={noOfDays}
                 onChange={(e) => setNoOfDays(Number(e.target.value))}
-                className="w-full text-sm rounded-lg border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                placeholder="e.g. 1, 1.5, 2"
+                className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-900 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-colors"
               />
             </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Purpose</label>
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Purpose of Leave <span className="text-red-500">*</span></label>
               <textarea
                 required
                 rows={3}
                 value={purpose}
                 onChange={(e) => setPurpose(e.target.value)}
-                className="w-full text-sm rounded-lg border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                placeholder="Enter detailed purpose for leave..."
+                placeholder="Please explain the reason for your leave clearly..."
+                className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-900 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-colors resize-none"
               />
-            </div>
-
-            <div className="mt-6 flex justify-end gap-3">
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800 rounded-xl"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl disabled:opacity-50"
-              >
-                {isSubmitting ? 'Submitting...' : 'Submit Application'}
-              </button>
             </div>
           </form>
         </div>
+
+        {/* Modal Footer */}
+        <div className="p-5 border-t border-slate-200 bg-slate-50 flex items-center justify-end gap-3 shrink-0">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-5 py-2.5 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-200 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            form="apply-leave-form"
+            type="submit"
+            disabled={isSubmitting}
+            className="px-6 py-2.5 rounded-xl text-sm font-bold text-white bg-teal-600 hover:bg-teal-700 transition-all shadow-sm shadow-teal-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            {isSubmitting ? (
+              <>
+                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>Submitting...</span>
+              </>
+            ) : (
+              'Submit Application'
+            )}
+          </button>
+        </div>
+
       </div>
     </div>
   );
