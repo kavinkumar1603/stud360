@@ -105,7 +105,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (data.students) setStudents(data.students);
         if (data.advisors) setAdvisors(data.advisors);
         if (data.classes) setClasses(data.classes);
-        if (data.leaveApplications) setLeaveApplications(data.leaveApplications);
+        
+        if (data.leaveApplications) {
+          setLeaveApplications(data.leaveApplications);
+        } else {
+          // Fallback: If backend is outdated and doesn't return leaveApplications
+          const { supabase } = await import('../utils/supabase');
+          const { data: leavesData, error } = await supabase.from('leave_applications').select('*').order('created_at', { ascending: false });
+          if (!error && leavesData) {
+            setLeaveApplications(leavesData);
+          }
+        }
+
         if (data.odRequests) {
           const mapped = data.odRequests.map((od: any) => ({
             ...od,
@@ -165,8 +176,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           }));
           setOdRequests(prev => JSON.stringify(prev) !== JSON.stringify(mapped) ? mapped : prev);
         }
+        
         if (data.leaveApplications) {
           setLeaveApplications(prev => JSON.stringify(prev) !== JSON.stringify(data.leaveApplications) ? data.leaveApplications : prev);
+        } else {
+          // Fallback: If backend is outdated
+          const { supabase } = await import('../utils/supabase');
+          const { data: leavesData, error } = await supabase.from('leave_applications').select('*').order('created_at', { ascending: false });
+          if (!error && leavesData) {
+            setLeaveApplications(prev => JSON.stringify(prev) !== JSON.stringify(leavesData) ? leavesData : prev);
+          }
         }
       } catch (err) {
         console.error("Error polling for updates:", err);
@@ -506,8 +525,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newLeave)
       });
-      if (!res.ok) throw new Error('Failed to save');
-      const inserted = await res.json();
+      
+      let inserted;
+      if (!res.ok) {
+        if (res.status === 404) {
+          // Fallback: If backend is outdated and returns 404, insert directly to Supabase
+          const { supabase } = await import('../utils/supabase');
+          const { data: insertedData, error } = await supabase.from('leave_applications').insert(newLeave).select().single();
+          if (error) throw error;
+          inserted = insertedData;
+        } else {
+          throw new Error('Failed to save');
+        }
+      } else {
+        inserted = await res.json();
+      }
+      
       setLeaveApplications(prev => [inserted, ...prev]);
       addToast('Leave application sent to your advisor', 'success');
     } catch (error) {
@@ -523,8 +556,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ advisor_status: status })
       });
-      if (!res.ok) throw new Error('Failed to update');
-      const updated = await res.json();
+      
+      let updated;
+      if (!res.ok) {
+        if (res.status === 404) {
+          // Fallback: If backend is outdated and returns 404, update directly to Supabase
+          const { supabase } = await import('../utils/supabase');
+          const { data: updatedData, error } = await supabase.from('leave_applications').update({ advisor_status: status }).eq('id', id).select().single();
+          if (error) throw error;
+          updated = updatedData;
+        } else {
+          throw new Error('Failed to update');
+        }
+      } else {
+        updated = await res.json();
+      }
+      
       setLeaveApplications(prev => prev.map(l => l.id === id ? updated : l));
       addToast(`Leave Application ${status}`, 'success');
     } catch (error) {
@@ -538,7 +585,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const res = await fetch(`${API_URL}/leave-applications/${id}`, {
         method: 'DELETE'
       });
-      if (!res.ok) throw new Error('Failed to delete');
+      
+      if (!res.ok) {
+        if (res.status === 404) {
+          // Fallback: If backend is outdated and returns 404, delete directly from Supabase
+          const { supabase } = await import('../utils/supabase');
+          const { error } = await supabase.from('leave_applications').delete().eq('id', id);
+          if (error) throw error;
+        } else {
+          throw new Error('Failed to delete');
+        }
+      }
+      
       setLeaveApplications(prev => prev.filter(l => l.id !== id));
       addToast('Leave application deleted', 'info');
     } catch (error) {
