@@ -151,37 +151,7 @@ export const AdvisorLeaveRequestsView: React.FC<AdvisorLeaveRequestsViewProps> =
                 </div>
               </div>
 
-              {/* Leave Details Box */}
-              <div className="bg-slate-50/80 rounded-xl p-4 border border-slate-100">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-3 pb-3 border-b border-slate-200/60">
-                  <div>
-                    <p className="text-[10px] uppercase font-bold text-slate-400 mb-0.5">Leave Type</p>
-                    <p className="text-xs font-semibold text-slate-700">{l.leave_type}</p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] uppercase font-bold text-slate-400 mb-0.5">Scholar Type</p>
-                    <p className="text-xs font-semibold text-slate-700">{l.scholar_type}</p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] uppercase font-bold text-slate-400 mb-0.5">Duration</p>
-                    <p className="text-xs font-semibold text-slate-700 flex items-center gap-1">
-                      <Calendar className="w-3 h-3" />
-                      {l.no_of_days} Day(s)
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] uppercase font-bold text-slate-400 mb-0.5">Date</p>
-                    <p className="text-xs font-semibold text-slate-700">
-                      {l.from_date ? `${l.from_date} to ${l.to_date}` : l.on_date}
-                    </p>
-                  </div>
-                </div>
-                
-                <div>
-                  <p className="text-[10px] uppercase font-bold text-slate-400 mb-1">Purpose</p>
-                  <p className="text-sm font-medium text-slate-800">{l.purpose}</p>
-                </div>
-              </div>
+
 
               {/* Action Buttons */}
               <div className="flex items-center justify-end gap-2 pt-2">

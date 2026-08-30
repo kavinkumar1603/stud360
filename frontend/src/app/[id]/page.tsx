@@ -109,9 +109,7 @@ export default function DashboardRoute({ params }: { params: Promise<{ id: strin
 
   return (
     <SidebarLayout activeTab={activeTab} setActiveTab={handleTabChange}>
-      {selectedLeave && role === 'ADVISOR' ? (
-        <LeaveDetailAdvisorView leaveApplication={selectedLeave} onBack={() => setSelectedLeave(null)} />
-      ) : selectedOD ? (
+      {selectedOD ? (
         role === 'ADVISOR' ? (
           <ODDetailAdvisorView odRequest={selectedOD} onBack={() => setSelectedOD(null)} />
         ) : (
@@ -177,6 +175,10 @@ export default function DashboardRoute({ params }: { params: Promise<{ id: strin
             if (tab === 'requests') setActiveTab('student_requests');
           }}
         />
+      )}
+
+      {selectedLeave && role === 'ADVISOR' && (
+        <LeaveDetailAdvisorView leaveApplication={selectedLeave} onBack={() => setSelectedLeave(null)} />
       )}
 
       <ApplyODModal
