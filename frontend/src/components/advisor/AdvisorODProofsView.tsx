@@ -9,7 +9,7 @@ export const AdvisorODProofsView: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
 
   // Get cohort IDs
-  const myStudentIds = students.filter(s => s.advisor_id === currentAdvisor?.id).map(s => s.id);
+  const myStudentIds = students.filter(s => s.advisor_id === currentAdvisor?.id || s.tutor_id === currentAdvisor?.id).map(s => s.id);
 
   // Filter ONLY APPROVED requests relevant to this advisor (All time, or current AY/sem?) 
   // The user likely wants to see all approved ODs for the current AY/sem or all-time. Let's do all-time cohort to match dashboard.

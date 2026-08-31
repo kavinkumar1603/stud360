@@ -67,7 +67,13 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({
   ).length;
 
   const pendingLeaveCount = (leaveApplications || []).filter(
-    (l) => l.advisor_id === currentAdvisor.id && l.advisor_status === 'PENDING'
+    (l) => {
+      if (l.tutor_id === currentAdvisor.id && l.tutor_status === 'PENDING') return true;
+      if (l.advisor_id === currentAdvisor.id && l.advisor_status === 'PENDING') {
+        if (!l.tutor_id || l.tutor_status === 'APPROVED') return true;
+      }
+      return false;
+    }
   ).length;
 
   const handleNavClick = (tab: NavTab) => {
@@ -183,7 +189,7 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({
             <div className="space-y-1 pt-2 border-t border-slate-100">
               <div className="px-3 pb-2 pt-2 text-[10px] font-bold uppercase tracking-widest text-amber-600 flex items-center gap-1.5">
                 <ShieldCheck className="w-3.5 h-3.5" />
-                <span>Advisor Admin Tools</span>
+                <span>{currentAdvisor?.title === 'tutor' ? 'Tutor Admin Tools' : 'Advisor Admin Tools'}</span>
               </div>
 
               <button
@@ -196,7 +202,7 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({
                 }`}
               >
                 <LayoutDashboard className={`w-4 h-4 ${activeTab === 'advisor_dashboard' ? 'text-white' : 'text-amber-500'}`} />
-                <span>Advisor Dashboard</span>
+                <span>{currentAdvisor?.title === 'tutor' ? 'Tutor Dashboard' : 'Advisor Dashboard'}</span>
               </button>
 
               <button
@@ -226,28 +232,6 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({
               </button>
 
               <button
-                id="nav-advisor-requests"
-                onClick={() => handleNavClick('advisor_requests')}
-                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                  activeTab === 'advisor_requests'
-                    ? 'bg-amber-600 text-white shadow-sm font-bold'
-                    : 'text-slate-600 hover:bg-amber-50 hover:text-amber-900'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <Clock className={`w-4 h-4 ${activeTab === 'advisor_requests' ? 'text-white' : 'text-amber-500'}`} />
-                  <span>OD Applications</span>
-                </div>
-                {pendingAdvisorCount > 0 && (
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                    activeTab === 'advisor_requests' ? 'bg-white text-amber-800' : 'bg-amber-100 text-amber-800'
-                  }`}>
-                    {pendingAdvisorCount}
-                  </span>
-                )}
-              </button>
-
-              <button
                 id="nav-advisor-leaves"
                 onClick={() => handleNavClick('advisor_leaves')}
                 className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
@@ -269,18 +253,44 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({
                 )}
               </button>
 
-              <button
-                id="nav-advisor-proofs"
-                onClick={() => handleNavClick('advisor_proofs')}
-                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                  activeTab === 'advisor_proofs'
-                    ? 'bg-amber-600 text-white shadow-sm font-bold'
-                    : 'text-slate-600 hover:bg-amber-50 hover:text-amber-900'
-                }`}
-              >
-                <FileText className={`w-4 h-4 ${activeTab === 'advisor_proofs' ? 'text-white' : 'text-amber-500'}`} />
-                <span>Proof Submissions</span>
-              </button>
+              {currentAdvisor?.title !== 'tutor' && (
+                <>
+                  <button
+                    id="nav-advisor-requests"
+                    onClick={() => handleNavClick('advisor_requests')}
+                    className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                      activeTab === 'advisor_requests'
+                        ? 'bg-amber-600 text-white shadow-sm font-bold'
+                        : 'text-slate-600 hover:bg-amber-50 hover:text-amber-900'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Clock className={`w-4 h-4 ${activeTab === 'advisor_requests' ? 'text-white' : 'text-amber-500'}`} />
+                      <span>OD Applications</span>
+                    </div>
+                    {pendingAdvisorCount > 0 && (
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                        activeTab === 'advisor_requests' ? 'bg-white text-amber-800' : 'bg-amber-100 text-amber-800'
+                      }`}>
+                        {pendingAdvisorCount}
+                      </span>
+                    )}
+                  </button>
+
+                  <button
+                    id="nav-advisor-proofs"
+                    onClick={() => handleNavClick('advisor_proofs')}
+                    className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                      activeTab === 'advisor_proofs'
+                        ? 'bg-amber-600 text-white shadow-sm font-bold'
+                        : 'text-slate-600 hover:bg-amber-50 hover:text-amber-900'
+                    }`}
+                  >
+                    <FileText className={`w-4 h-4 ${activeTab === 'advisor_proofs' ? 'text-white' : 'text-amber-500'}`} />
+                    <span>Proof Submissions</span>
+                  </button>
+                </>
+              )}
             </div>
           )}
 

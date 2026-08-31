@@ -9,7 +9,7 @@ export const AdvisorProfileView: React.FC = () => {
 
   if (!currentAdvisor?.name) return null;
 
-  const myStudents = students.filter((s) => s.advisor_id === currentAdvisor.id);
+  const myStudents = students.filter((s) => s.advisor_id === currentAdvisor.id || s.tutor_id === currentAdvisor.id);
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">

@@ -24,7 +24,7 @@ export const AdvisorODRequestsView: React.FC<AdvisorODRequestsViewProps> = ({
   const [selectedSem, setSelectedSem] = useState<string>('ALL');
 
   // Get cohort IDs
-  const myStudentIds = students.filter(s => s.advisor_id === currentAdvisor?.id).map(s => s.id);
+  const myStudentIds = students.filter(s => s.advisor_id === currentAdvisor?.id || s.tutor_id === currentAdvisor?.id).map(s => s.id);
 
   // Filter requests relevant to this advisor (All time / Till date)
   const allRequests = odRequests.filter(
