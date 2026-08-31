@@ -57,6 +57,7 @@ export interface LeaveApplication {
   student_name: string;
   student_roll: string;
   advisor_id: string;
+  tutor_id?: string;
   leave_type: LeaveType;
   scholar_type: ScholarType;
   semester: Semester;
@@ -65,6 +66,7 @@ export interface LeaveApplication {
   on_date?: string;
   no_of_days: number;
   purpose: string;
+  tutor_status?: AdvisorStatus;
   advisor_status: AdvisorStatus;
   created_at: string;
 }
@@ -96,6 +98,7 @@ export interface Student {
   year?: string;
   semester: Semester;
   advisor_id: string;
+  tutor_id?: string;
   class_id?: string;
   avatar?: string;
 }

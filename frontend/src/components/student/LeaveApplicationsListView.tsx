@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
+import { LeaveApplication } from '../../types';
 import { Plus, Search, Calendar, Clock, CheckCircle2, XCircle } from 'lucide-react';
 
 interface LeaveApplicationsListViewProps {
@@ -15,6 +16,12 @@ export const LeaveApplicationsListView: React.FC<LeaveApplicationsListViewProps>
   const safeLeaves = leaveApplications || [];
   const myLeaves = safeLeaves.filter((l) => l.student_id === currentStudent.id);
 
+  const getFinalStatus = (l: LeaveApplication) => {
+      if (l.tutor_id && l.tutor_status === 'REJECTED') return 'REJECTED';
+      if (l.tutor_id && l.tutor_status === 'PENDING') return 'PENDING';
+      return l.advisor_status;
+  };
+
   const filteredLeaves = myLeaves.filter((l) => {
     if (searchQuery.trim() !== '') {
       const q = searchQuery.toLowerCase();
@@ -22,9 +29,21 @@ export const LeaveApplicationsListView: React.FC<LeaveApplicationsListViewProps>
       const matchType = l.leave_type.toLowerCase().includes(q);
       if (!matchPurpose && !matchType) return false;
     }
-    if (activeTabFilter !== 'ALL' && l.advisor_status !== activeTabFilter) return false;
+    if (activeTabFilter !== 'ALL' && getFinalStatus(l) !== activeTabFilter) return false;
     return true;
   });
+
+  const getDisplayStatus = (l: LeaveApplication) => {
+    if (l.tutor_id) {
+      if (l.tutor_status === 'REJECTED') return 'REJECTED (Tutor)';
+      if (l.tutor_status === 'PENDING') return 'PENDING (Tutor)';
+      if (l.tutor_status === 'APPROVED') {
+         if (l.advisor_status === 'PENDING') return 'PENDING (Advisor)';
+         if (l.advisor_status === 'REJECTED') return 'REJECTED (Advisor)';
+      }
+    }
+    return l.advisor_status;
+  };
 
   return (
     <div className="space-y-6">
@@ -120,14 +139,14 @@ export const LeaveApplicationsListView: React.FC<LeaveApplicationsListViewProps>
                     {/* STATUS */}
                     <td className="py-4 px-6 text-right">
                       <div className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold ${
-                        l.advisor_status === 'APPROVED' ? 'bg-emerald-100 text-emerald-800' :
-                        l.advisor_status === 'REJECTED' ? 'bg-rose-100 text-rose-800' :
+                        getFinalStatus(l) === 'APPROVED' ? 'bg-emerald-100 text-emerald-800' :
+                        getFinalStatus(l) === 'REJECTED' ? 'bg-rose-100 text-rose-800' :
                         'bg-amber-100 text-amber-800'
                       }`}>
-                        {l.advisor_status === 'APPROVED' && <CheckCircle2 className="w-3 h-3" />}
-                        {l.advisor_status === 'REJECTED' && <XCircle className="w-3 h-3" />}
-                        {l.advisor_status === 'PENDING' && <Clock className="w-3 h-3" />}
-                        <span>{l.advisor_status}</span>
+                        {getFinalStatus(l) === 'APPROVED' && <CheckCircle2 className="w-3 h-3" />}
+                        {getFinalStatus(l) === 'REJECTED' && <XCircle className="w-3 h-3" />}
+                        {getFinalStatus(l) === 'PENDING' && <Clock className="w-3 h-3" />}
+                        <span>{getDisplayStatus(l)}</span>
                       </div>
                     </td>
                   </tr>

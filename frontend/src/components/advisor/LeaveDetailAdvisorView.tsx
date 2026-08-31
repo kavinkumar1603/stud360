@@ -21,12 +21,21 @@ interface LeaveDetailAdvisorViewProps {
 }
 
 export const LeaveDetailAdvisorView: React.FC<LeaveDetailAdvisorViewProps> = ({ leaveApplication, onBack }) => {
-  const { leaveApplications, advisorReviewLeave, deleteLeaveApplication } = useApp();
+  const { currentAdvisor, leaveApplications, advisorReviewLeave, tutorReviewLeave, deleteLeaveApplication } = useApp();
 
   // Find live state from context
   const currentLeave = leaveApplications?.find((r) => r.id === leaveApplication.id) || leaveApplication;
 
   const [isActionPending, setIsActionPending] = useState(false);
+
+  const getRelevantStatus = (l: LeaveApplication) => {
+    if (l.tutor_id === currentAdvisor?.id) {
+      return l.tutor_status || 'PENDING';
+    }
+    return l.advisor_status;
+  };
+
+  const relevantStatus = getRelevantStatus(currentLeave);
 
   const handleDelete = async () => {
     if (confirm('Are you sure you want to delete this leave application? This action cannot be undone.')) {
@@ -39,13 +48,21 @@ export const LeaveDetailAdvisorView: React.FC<LeaveDetailAdvisorViewProps> = ({ 
 
   const handleApprove = async () => {
     setIsActionPending(true);
-    await advisorReviewLeave(currentLeave.id, 'APPROVED');
+    if (currentLeave.tutor_id === currentAdvisor?.id) {
+      await tutorReviewLeave(currentLeave.id, 'APPROVED');
+    } else {
+      await advisorReviewLeave(currentLeave.id, 'APPROVED');
+    }
     setIsActionPending(false);
   };
 
   const handleReject = async () => {
     setIsActionPending(true);
-    await advisorReviewLeave(currentLeave.id, 'REJECTED');
+    if (currentLeave.tutor_id === currentAdvisor?.id) {
+      await tutorReviewLeave(currentLeave.id, 'REJECTED');
+    } else {
+      await advisorReviewLeave(currentLeave.id, 'REJECTED');
+    }
     setIsActionPending(false);
   };
 
@@ -113,12 +130,12 @@ export const LeaveDetailAdvisorView: React.FC<LeaveDetailAdvisorViewProps> = ({ 
 
             <div className="flex flex-col items-end gap-2 shrink-0">
               <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold border ${
-                currentLeave.advisor_status === 'APPROVED' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' :
-                currentLeave.advisor_status === 'REJECTED' ? 'bg-rose-50 border-rose-200 text-rose-800' :
+                relevantStatus === 'APPROVED' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' :
+                relevantStatus === 'REJECTED' ? 'bg-rose-50 border-rose-200 text-rose-800' :
                 'bg-amber-50 border-amber-200 text-amber-800'
               }`}>
-                {getStatusIcon(currentLeave.advisor_status)}
-                <span className="text-sm uppercase tracking-wide">{currentLeave.advisor_status}</span>
+                {getStatusIcon(relevantStatus)}
+                <span className="text-sm uppercase tracking-wide">{relevantStatus}</span>
               </div>
               <p className="text-[10px] text-slate-400 font-medium">
                 Submitted {format(new Date(currentLeave.created_at), 'MMM d, yyyy')}
@@ -162,9 +179,9 @@ export const LeaveDetailAdvisorView: React.FC<LeaveDetailAdvisorViewProps> = ({ 
           </div>
 
           {/* Advisor Actions (Only if PENDING) */}
-          {currentLeave.advisor_status === 'PENDING' && (
+          {relevantStatus === 'PENDING' && (
             <div className="pt-6 border-t border-slate-100 pb-2">
-              <h3 className="text-sm font-bold text-slate-900 mb-4">Advisor Review Decision</h3>
+              <h3 className="text-sm font-bold text-slate-900 mb-4">Review Decision</h3>
               <div className="flex flex-col sm:flex-row gap-3">
                 <button
                   onClick={handleReject}

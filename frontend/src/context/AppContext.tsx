@@ -67,6 +67,7 @@ interface AppContextType {
   leaveApplications: LeaveApplication[];
   addLeaveApplication: (data: { leave_type: LeaveType; scholar_type: ScholarType; semester: Semester; from_date?: string; to_date?: string; on_date?: string; no_of_days: number; purpose: string }) => Promise<void>;
   advisorReviewLeave: (id: string, status: AdvisorStatus) => Promise<void>;
+  tutorReviewLeave: (id: string, status: AdvisorStatus) => Promise<void>;
   deleteLeaveApplication: (id: string) => Promise<void>;
   resetToDefaultData: () => void;
 }
@@ -515,7 +516,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       student_name: currentStudent.name,
       student_roll: currentStudent.roll_no,
       advisor_id: currentStudent.advisor_id,
+      tutor_id: currentStudent.tutor_id || null,
       ...data,
+      tutor_status: 'PENDING',
       advisor_status: 'PENDING'
     };
 
@@ -560,7 +563,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       let updated;
       if (!res.ok) {
         if (res.status === 404) {
-          // Fallback: If backend is outdated and returns 404, update directly to Supabase
           const { supabase } = await import('../utils/supabase');
           const { data: updatedData, error } = await supabase.from('leave_applications').update({ advisor_status: status }).eq('id', id).select().single();
           if (error) throw error;
@@ -576,6 +578,36 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       addToast(`Leave Application ${status}`, 'success');
     } catch (error) {
       addToast('Error updating leave application', 'error');
+      console.error(error);
+    }
+  };
+
+  const tutorReviewLeave = async (id: string, status: AdvisorStatus) => {
+    try {
+      const res = await fetch(`${API_URL}/leave-applications/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tutor_status: status })
+      });
+      
+      let updated;
+      if (!res.ok) {
+        if (res.status === 404) {
+          const { supabase } = await import('../utils/supabase');
+          const { data: updatedData, error } = await supabase.from('leave_applications').update({ tutor_status: status }).eq('id', id).select().single();
+          if (error) throw error;
+          updated = updatedData;
+        } else {
+          throw new Error('Failed to update');
+        }
+      } else {
+        updated = await res.json();
+      }
+      
+      setLeaveApplications(prev => prev.map(l => l.id === id ? updated : l));
+      addToast(`Tutor Leave Approval ${status}`, 'success');
+    } catch (error) {
+      addToast('Error updating leave application tutor status', 'error');
       console.error(error);
     }
   };
@@ -643,6 +675,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         leaveApplications,
         addLeaveApplication,
         advisorReviewLeave,
+        tutorReviewLeave,
         deleteLeaveApplication,
         resetToDefaultData
       }}

@@ -14,17 +14,27 @@ export const AdvisorLeaveRequestsView: React.FC<AdvisorLeaveRequestsViewProps> =
   onSelectLeaveRequest,
   defaultFilter = 'PENDING'
 }) => {
-  const { currentAdvisor, leaveApplications, advisorReviewLeave, deleteLeaveApplication } = useApp();
+  const { currentAdvisor, leaveApplications, advisorReviewLeave, tutorReviewLeave, deleteLeaveApplication } = useApp();
   const [activeFilter, setActiveFilter] = useState(defaultFilter);
   const [selectedSem, setSelectedSem] = useState<string>('ALL');
 
   const allLeaveRequests = leaveApplications?.filter(
-    (l) => l.advisor_id === currentAdvisor?.id
+    (l) => l.advisor_id === currentAdvisor?.id || l.tutor_id === currentAdvisor?.id
   ) || [];
 
+  const getRelevantStatus = (l: LeaveApplication) => {
+    if (l.tutor_id === currentAdvisor?.id) {
+      return l.tutor_status || 'PENDING';
+    }
+    return l.advisor_status;
+  };
+
   const displayedLeaves = allLeaveRequests.filter(l => {
-    if (activeFilter !== 'ALL' && l.advisor_status !== activeFilter) return false;
+    const relevantStatus = getRelevantStatus(l);
+    if (activeFilter !== 'ALL' && relevantStatus !== activeFilter) return false;
     if (selectedSem !== 'ALL' && l.semester !== selectedSem) return false;
+    // If user is advisor, they should only see requests that have been approved by the tutor (if a tutor exists)
+    if (l.advisor_id === currentAdvisor?.id && l.tutor_id && l.tutor_status !== 'APPROVED') return false;
     return true;
   });
 
@@ -84,7 +94,11 @@ export const AdvisorLeaveRequestsView: React.FC<AdvisorLeaveRequestsViewProps> =
         {/* Status Filters */}
         <div className="flex items-center gap-2 pt-1 border-t border-slate-100 overflow-x-auto custom-scrollbar pb-2">
           {['ALL', 'PENDING', 'APPROVED', 'REJECTED'].map(tab => {
-            const count = allLeaveRequests.filter(l => tab === 'ALL' || l.advisor_status === tab).length;
+            const count = allLeaveRequests.filter(l => {
+              const relevantStatus = getRelevantStatus(l);
+              if (l.advisor_id === currentAdvisor?.id && l.tutor_id && l.tutor_status !== 'APPROVED') return false;
+              return tab === 'ALL' || relevantStatus === tab;
+            }).length;
             return (
               <button
                 key={tab}
@@ -141,12 +155,12 @@ export const AdvisorLeaveRequestsView: React.FC<AdvisorLeaveRequestsViewProps> =
                 {/* Right: Status & Actions */}
                 <div className="flex flex-col items-end gap-2 shrink-0 self-end sm:self-auto w-full sm:w-auto">
                   <div className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold flex items-center gap-1.5 ${
-                    l.advisor_status === 'APPROVED' ? 'bg-emerald-100 text-emerald-700' :
-                    l.advisor_status === 'REJECTED' ? 'bg-red-100 text-red-700' :
+                    getRelevantStatus(l) === 'APPROVED' ? 'bg-emerald-100 text-emerald-700' :
+                    getRelevantStatus(l) === 'REJECTED' ? 'bg-red-100 text-red-700' :
                     'bg-amber-100 text-amber-700'
                   }`}>
-                    {getStatusIcon(l.advisor_status)}
-                    <span>{l.advisor_status}</span>
+                    {getStatusIcon(getRelevantStatus(l))}
+                    <span>{getRelevantStatus(l)}</span>
                   </div>
                 </div>
               </div>
@@ -163,16 +177,30 @@ export const AdvisorLeaveRequestsView: React.FC<AdvisorLeaveRequestsViewProps> =
                   <Trash2 className="w-4 h-4" />
                 </button>
                 
-                {l.advisor_status === 'PENDING' && (
+                {getRelevantStatus(l) === 'PENDING' && (
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={(e) => { e.stopPropagation(); advisorReviewLeave(l.id, 'REJECTED'); }}
+                      onClick={(e) => { 
+                        e.stopPropagation(); 
+                        if (l.tutor_id === currentAdvisor?.id) {
+                          tutorReviewLeave(l.id, 'REJECTED');
+                        } else {
+                          advisorReviewLeave(l.id, 'REJECTED'); 
+                        }
+                      }}
                       className="px-4 py-2 rounded-xl text-xs font-bold text-red-700 bg-red-50 hover:bg-red-100 transition-colors"
                     >
                       Reject
                     </button>
                     <button
-                      onClick={(e) => { e.stopPropagation(); advisorReviewLeave(l.id, 'APPROVED'); }}
+                      onClick={(e) => { 
+                        e.stopPropagation(); 
+                        if (l.tutor_id === currentAdvisor?.id) {
+                          tutorReviewLeave(l.id, 'APPROVED');
+                        } else {
+                          advisorReviewLeave(l.id, 'APPROVED'); 
+                        }
+                      }}
                       className="px-4 py-2 rounded-xl text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors flex items-center gap-1"
                     >
                       <CheckCircle2 className="w-4 h-4" />
