@@ -325,10 +325,8 @@ app.delete('/api/deadlines/:id', authenticateToken, async (req, res) => {
   }
 });
 
-if (process.env.NODE_ENV !== 'production') {
-  app.listen(port, () => {
-    console.log(`Backend server running on port ${port}`);
-  });
-}
+app.listen(port, () => {
+  console.log(`Backend server running on port ${port}`);
+});
 
 export default app;
