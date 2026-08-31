@@ -110,7 +110,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             'Authorization': `Bearer ${token}`
           }
         });
-        if (!response.ok) throw new Error('Network response was not ok');
+        
+        if (!response.ok) {
+          if (response.status === 401) {
+            sessionStorage.removeItem('token');
+            sessionStorage.removeItem('userId');
+            sessionStorage.removeItem('userRole');
+            window.location.href = '/';
+            return;
+          }
+          throw new Error('Network response was not ok');
+        }
         const data = await response.json();
         
         if (data.students) setStudents(data.students);
@@ -158,7 +168,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           setIsAuthenticated(true);
         }
       } catch (err) {
-        console.error('An error occurred');
+        console.warn('Failed to fetch initial data, check backend connection');
       } finally {
         setIsInitializing(false);
       }
