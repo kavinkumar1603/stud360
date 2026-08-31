@@ -189,7 +189,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           setLeaveApplications(prev => JSON.stringify(prev) !== JSON.stringify(data.leaveApplications) ? data.leaveApplications : prev);
         }
       } catch (err) {
-        console.error('An error occurred');
+        console.warn('Polling failed, backend might be unreachable');
       }
     }, 10000);
 
