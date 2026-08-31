@@ -105,7 +105,7 @@ app.get('/api/data', authenticateToken, async (req, res) => {
       const [
         { data: studentRes },
         { data: odRes },
-        { data: leavesRes }
+        { data: leavesRes, error: leavesError }
       ] = await Promise.all([
         supabase.from('students').select('*').eq('id', id),
         supabase.from('od_requests').select('*').eq('student_id', id).order('created_at', { ascending: false }),
@@ -115,10 +115,19 @@ app.get('/api/data', authenticateToken, async (req, res) => {
       studentsData = studentRes || [];
       odData = odRes || [];
       leavesData = leavesRes || [];
+      console.log(`[GET /api/data] STUDENT leaves count: ${leavesData.length}. Error? ${leavesError?.message}`);
             if (studentsData.length > 0) {
           const advId = studentsData[0].advisor_id;
+          const tutId = studentsData[0].tutor_id;
+          const ids = [advId, tutId].filter(Boolean);
           
           const queries = [];
+          if (ids.length > 0) {
+            queries.push(supabase.from('advisors').select('id, name, department, title, avatar').in('id', ids));
+          } else {
+            queries.push(Promise.resolve({ data: [] }));
+          }
+          
           if (advId) {
             queries.push(supabase.from('classes').select('*').eq('advisor_id', advId).order('created_at', { ascending: true }));
             queries.push(supabase.from('deadlines').select('*').eq('advisor_id', advId).order('due_date', { ascending: true }));
@@ -127,8 +136,9 @@ app.get('/api/data', authenticateToken, async (req, res) => {
             queries.push(Promise.resolve({ data: [] }));
           }
 
-          const [{ data: clRes }, { data: dlRes }] = await Promise.all(queries);
+          const [{ data: advRes }, { data: clRes }, { data: dlRes }] = await Promise.all(queries);
           
+          advisorsData = advRes || [];
           classesData = clRes || [];
           deadlinesData = dlRes || [];
         }
@@ -246,15 +256,21 @@ app.delete('/api/od-requests/:id', authenticateToken, async (req, res) => {
   }
 });
 
-app.post('/api/leave-applications', authenticateToken, async (req, res) => {
-  try {
-    const { data: inserted, error } = await supabase.from('leave_applications').insert(req.body).select().single();
-    if (error) throw error;
-    res.json(inserted);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
+  app.post('/api/leave-applications', authenticateToken, async (req, res) => {
+    try {
+      console.log('Received leave application:', req.body);
+      const { data: inserted, error } = await supabase.from('leave_applications').insert(req.body).select().single();
+      if (error) {
+        console.error('Error inserting leave:', error);
+        throw error;
+      }
+      console.log('Inserted leave application:', inserted);
+      res.json(inserted);
+    } catch (error) {
+      console.error('Catch block error in POST /api/leave-applications:', error.message);
+      res.status(500).json({ error: error.message });
+    }
+  });
 
 app.put('/api/leave-applications/:id', authenticateToken, async (req, res) => {
   try {
