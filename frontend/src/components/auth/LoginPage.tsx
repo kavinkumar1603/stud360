@@ -90,18 +90,16 @@ export const LoginPage: React.FC = () => {
       sessionStorage.setItem('userId', data.user.id);
       sessionStorage.setItem('userRole', data.user.role);
 
-      login(data.user.id, data.user.role);
-
       const roleName = data.user.role === 'STUDENT' ? 'Student' : 'Faculty Advisor';
       addToast(`Logged in as ${roleName} (${data.user.name})`, 'success');
 
       if (data.user.role === 'STUDENT') {
-        router.push(`/${data.user.roll_no.toLowerCase()}`);
+        window.location.href = `/${data.user.roll_no.toLowerCase()}`;
       } else {
-        router.push('/advisor');
+        window.location.href = '/advisor';
       }
     } catch (error) {
-      console.error('Login request failed:', error);
+      console.error('Login request failed');
       setErrorMessage('Failed to connect to the server. Please ensure the backend is running.');
       setIsLoading(false);
     }

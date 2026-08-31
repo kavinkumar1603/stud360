@@ -99,7 +99,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch(`${API_URL}/data`);
+        const token = sessionStorage.getItem('token');
+        if (!token) {
+          setIsInitializing(false);
+          return;
+        }
+
+        const response = await fetch(`${API_URL}/data`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
         if (!response.ok) throw new Error('Network response was not ok');
         const data = await response.json();
         
@@ -109,13 +119,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         
         if (data.leaveApplications) {
           setLeaveApplications(data.leaveApplications);
-        } else {
-          // Fallback: If backend is outdated and doesn't return leaveApplications
-          const { supabase } = await import('../utils/supabase');
-          const { data: leavesData, error } = await supabase.from('leave_applications').select('*').order('created_at', { ascending: false });
-          if (!error && leavesData) {
-            setLeaveApplications(leavesData);
-          }
         }
 
         if (data.odRequests) {
@@ -131,7 +134,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         let storedUserRole = sessionStorage.getItem('userRole');
 
         // Fallback for older sessions: decode the JWT token directly
-        const token = sessionStorage.getItem('token');
         if (token && (!storedUserId || !storedUserRole)) {
           try {
             const payload = JSON.parse(atob(token.split('.')[1]));
@@ -140,7 +142,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             sessionStorage.setItem('userId', payload.id);
             sessionStorage.setItem('userRole', payload.role);
           } catch (e) {
-            console.error('Failed to decode token payload:', e);
+            console.error('An error occurred');
           }
         }
 
@@ -156,7 +158,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           setIsAuthenticated(true);
         }
       } catch (err) {
-        console.error("Error fetching data from backend:", err);
+        console.error('An error occurred');
       } finally {
         setIsInitializing(false);
       }
@@ -166,7 +168,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     // Poll for dynamic updates every 10 seconds to keep dashboards in sync
     const intervalId = setInterval(async () => {
       try {
-        const response = await fetch(`${API_URL}/data`);
+        const token = sessionStorage.getItem('token');
+        if (!token) return; // Don't poll if not logged in
+        
+        const response = await fetch(`${API_URL}/data`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
         if (!response.ok) return;
         const data = await response.json();
         
@@ -180,16 +187,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         
         if (data.leaveApplications) {
           setLeaveApplications(prev => JSON.stringify(prev) !== JSON.stringify(data.leaveApplications) ? data.leaveApplications : prev);
-        } else {
-          // Fallback: If backend is outdated
-          const { supabase } = await import('../utils/supabase');
-          const { data: leavesData, error } = await supabase.from('leave_applications').select('*').order('created_at', { ascending: false });
-          if (!error && leavesData) {
-            setLeaveApplications(prev => JSON.stringify(prev) !== JSON.stringify(leavesData) ? leavesData : prev);
-          }
         }
       } catch (err) {
-        console.error("Error polling for updates:", err);
+        console.error('An error occurred');
       }
     }, 10000);
 
@@ -267,7 +267,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try {
       const res = await fetch(`${API_URL}/od-requests`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${sessionStorage.getItem('token')}` },
         body: JSON.stringify(newRequest)
       });
       if (!res.ok) {
@@ -285,7 +285,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       addToast('Sent to your advisor for approval', 'success');
     } catch (error: any) {
       addToast(error.message || 'Error saving OD request', 'error');
-      console.error(error);
+      console.error('An error occurred');
     }
   };
 
@@ -304,7 +304,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try {
       const res = await fetch(`${API_URL}/od-requests/${odId}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${sessionStorage.getItem('token')}` },
         body: JSON.stringify(updates)
       });
       if (!res.ok) throw new Error('Failed to update');
@@ -316,7 +316,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       addToast('Proof submitted — Awaiting verification', 'success');
     } catch (error) {
       addToast('Error submitting proof', 'error');
-      console.error(error);
+      console.error('An error occurred');
     }
   };
 
@@ -342,7 +342,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try {
       const res = await fetch(`${API_URL}/od-requests/${odId}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${sessionStorage.getItem('token')}` },
         body: JSON.stringify(updates)
       });
       if (!res.ok) throw new Error('Failed to update');
@@ -354,7 +354,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       addToast(status === 'APPROVED' ? 'OD Request Approved successfully' : 'OD Request Rejected', status === 'APPROVED' ? 'success' : 'info');
     } catch (error) {
       addToast('Error reviewing OD request', 'error');
-      console.error(error);
+      console.error('An error occurred');
     }
   };
 
@@ -372,7 +372,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try {
       const res = await fetch(`${API_URL}/od-requests/${odId}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${sessionStorage.getItem('token')}` },
         body: JSON.stringify(updates)
       });
       if (!res.ok) throw new Error('Failed to update');
@@ -383,7 +383,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setOdRequests(prev => prev.map(r => r.id === odId ? updated : r));
       addToast(newStatus === 'VERIFIED' ? 'Proof verified and marked complete' : 'Proof rejected — student requested to resubmit', newStatus === 'VERIFIED' ? 'success' : 'info');
     } catch (error) {
-      console.error(error);
+      console.error('An error occurred');
     }
   };
 
@@ -398,7 +398,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try {
       const res = await fetch(`${API_URL}/students`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${sessionStorage.getItem('token')}` },
         body: JSON.stringify(newStudent)
       });
       if (!res.ok) throw new Error('Failed to save');
@@ -407,7 +407,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       addToast('Student added successfully', 'success');
     } catch (error) {
       addToast('Error adding student', 'error');
-      console.error(error);
+      console.error('An error occurred');
     }
   };const addDeadline = async (data: { title: string; description?: string; due_date: string }) => {
     if (!currentAdvisor?.id) return;
@@ -420,7 +420,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try {
       const res = await fetch(`${API_URL}/deadlines`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${sessionStorage.getItem('token')}` },
         body: JSON.stringify(newDeadline)
       });
       if (!res.ok) throw new Error('Failed to save');
@@ -429,28 +429,30 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       addToast('Deadline added successfully', 'success');
     } catch (error) {
       addToast('Error adding deadline', 'error');
-      console.error(error);
+      console.error('An error occurred');
     }
   };
 
   const deleteDeadline = async (id: string) => {
     try {
       const res = await fetch(`${API_URL}/deadlines/${id}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${sessionStorage.getItem('token')}` }
       });
       if (!res.ok) throw new Error('Failed to delete');
       setDeadlines((prev) => prev.filter(d => d.id !== id));
       addToast('Deadline deleted', 'info');
     } catch (error) {
       addToast('Error deleting deadline', 'error');
-      console.error(error);
+      console.error('An error occurred');
     }
   };
 
   const deleteODRequest = async (id: string) => {
     try {
       const res = await fetch(`${API_URL}/od-requests/${id}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${sessionStorage.getItem('token')}` }
       });
       if (!res.ok) {
         if (res.status === 404) {
@@ -467,7 +469,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       addToast('OD request deleted successfully', 'info');
     } catch (error) {
       addToast('Error deleting OD request', 'error');
-      console.error(error);
+      console.error('An error occurred');
     }
   };
 
@@ -477,7 +479,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try {
       const res = await fetch(`${API_URL}/classes`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${sessionStorage.getItem('token')}` },
         body: JSON.stringify({ name, advisor_id: currentAdvisor.id })
       });
       if (!res.ok) throw new Error('Failed to save');
@@ -486,14 +488,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       addToast('Class created successfully', 'success');
     } catch (error) {
       addToast('Error creating class', 'error');
-      console.error(error);
+      console.error('An error occurred');
     }
   };
 
   const removeClass = async (id: string) => {
     try {
       const res = await fetch(`${API_URL}/classes/${id}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${sessionStorage.getItem('token')}` }
       });
       if (!res.ok) throw new Error('Failed to delete');
       setClasses(prev => prev.filter(c => c.id !== id));
@@ -504,7 +507,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       addToast('Class removed successfully', 'info');
     } catch (error) {
       addToast('Error removing class', 'error');
-      console.error(error);
+      console.error('An error occurred');
     }
   };
 
@@ -525,7 +528,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try {
       const res = await fetch(`${API_URL}/leave-applications`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${sessionStorage.getItem('token')}` },
         body: JSON.stringify(newLeave)
       });
       
@@ -548,7 +551,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       addToast('Leave application sent to your advisor', 'success');
     } catch (error) {
       addToast('Error saving leave application', 'error');
-      console.error(error);
+      console.error('An error occurred');
     }
   };
 
@@ -556,7 +559,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try {
       const res = await fetch(`${API_URL}/leave-applications/${id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${sessionStorage.getItem('token')}` },
         body: JSON.stringify({ advisor_status: status })
       });
       
@@ -578,7 +581,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       addToast(`Leave Application ${status}`, 'success');
     } catch (error) {
       addToast('Error updating leave application', 'error');
-      console.error(error);
+      console.error('An error occurred');
     }
   };
 
@@ -586,7 +589,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try {
       const res = await fetch(`${API_URL}/leave-applications/${id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${sessionStorage.getItem('token')}` },
         body: JSON.stringify({ tutor_status: status })
       });
       
@@ -608,14 +611,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       addToast(`Tutor Leave Approval ${status}`, 'success');
     } catch (error) {
       addToast('Error updating leave application tutor status', 'error');
-      console.error(error);
+      console.error('An error occurred');
     }
   };
 
   const deleteLeaveApplication = async (id: string) => {
     try {
       const res = await fetch(`${API_URL}/leave-applications/${id}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${sessionStorage.getItem('token')}` }
       });
       
       if (!res.ok) {
@@ -633,7 +637,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       addToast('Leave application deleted', 'info');
     } catch (error) {
       addToast('Error deleting leave application', 'error');
-      console.error(error);
+      console.error('An error occurred');
     }
   };
 
