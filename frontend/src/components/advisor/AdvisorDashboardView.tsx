@@ -18,7 +18,7 @@ export const AdvisorDashboardView: React.FC<AdvisorDashboardViewProps> = ({
   const { currentAdvisor, students, odRequests , academicYear, semester } = useApp();
 
   // Get cohort IDs
-  const myStudentIds = students.filter(s => s.advisor_id === currentAdvisor?.id).map(s => s.id);
+  const myStudentIds = students.filter(s => s.advisor_id === currentAdvisor?.id || s.tutor_id === currentAdvisor?.id).map(s => s.id);
 
   // Filter Data by Cohort (All time / Till date)
   const cohortODs = odRequests.filter(

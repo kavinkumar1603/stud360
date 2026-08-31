@@ -20,7 +20,7 @@ export const AdvisorShell: React.FC = () => {
   const pendingCount = odRequests.filter(
     (od) => od.advisor_id === currentAdvisor.id && od.advisor_status === 'PENDING'
   ).length + (leaveApplications?.filter(
-    (l) => l.advisor_id === currentAdvisor.id && l.advisor_status === 'PENDING'
+    (l) => (l.advisor_id === currentAdvisor.id && l.advisor_status === 'PENDING') || (l.tutor_id === currentAdvisor.id && l.tutor_status === 'PENDING')
   )?.length || 0);
 
   return (

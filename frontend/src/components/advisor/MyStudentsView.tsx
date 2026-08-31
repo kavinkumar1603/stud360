@@ -35,7 +35,7 @@ export const MyStudentsView: React.FC<MyStudentsViewProps> = ({ onSelectStudent 
   const [isAddClassModalOpen, setIsAddClassModalOpen] = useState(false);
   const [selectedClass, setSelectedClass] = useState<DisplayClass | null>(null);
 
-  const myAssignedStudents = students.filter((s) => s.advisor_id === currentAdvisor.id);
+  const myAssignedStudents = students.filter((s) => s.advisor_id === currentAdvisor.id || s.tutor_id === currentAdvisor.id);
   const myAssignedClasses = classes.filter((c) => c.advisor_id === currentAdvisor.id);
 
   const dynamicClasses = useMemo(() => {
