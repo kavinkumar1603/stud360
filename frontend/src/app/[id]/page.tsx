@@ -144,6 +144,7 @@ export default function DashboardRoute({ params }: { params: Promise<{ id: strin
       ) : activeTab === 'advisor_dashboard' && role === 'ADVISOR' ? (
         <AdvisorDashboardView
           onSelectODRequest={(od) => setSelectedOD(od)}
+          onSelectLeaveRequest={(l) => setSelectedLeave(l)}
           onNavigateTab={(tab) => {
             if (tab === 'requests') {
               setAdvisorReqFilter('PENDING');
@@ -152,6 +153,14 @@ export default function DashboardRoute({ params }: { params: Promise<{ id: strin
             if (tab === 'all_requests') {
               setAdvisorReqFilter('ALL');
               setActiveTab('advisor_requests');
+            }
+            if (tab === 'leaves') {
+              setAdvisorReqFilter('PENDING');
+              setActiveTab('advisor_leaves');
+            }
+            if (tab === 'all_leaves') {
+              setAdvisorReqFilter('ALL');
+              setActiveTab('advisor_leaves');
             }
             if (tab === 'students') setActiveTab('advisor_students');
           }}
