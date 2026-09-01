@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import { Download, Search, CheckCircle2, FileText, User } from 'lucide-react';
+import { Download, Search, CheckCircle2, FileText, User, Users } from 'lucide-react';
 
 export const AdvisorODProofsView: React.FC = () => {
   const { currentAdvisor, odRequests, students, academicYear, semester } = useApp();
@@ -25,15 +25,20 @@ export const AdvisorODProofsView: React.FC = () => {
 
   const handleExportCSV = () => {
     // Generate CSV string
-    const headers = ['Roll No', 'Student Name', 'Event Name', 'Event Date', 'Proof Status', 'Drive Link', 'Remarks'];
+    const headers = ['Roll No', 'Student Name', 'Team Members', 'Event Name', 'Event Date', 'Proof Status', 'Drive Link', 'Remarks'];
     
     const rows = filteredRequests.map(od => {
       // Escape commas by quoting
       const escapeStr = (str: string | undefined) => str ? `"${str.replace(/"/g, '""')}"` : '""';
       
+      const teamMembersNames = od.request_type === 'Team' && od.team_members 
+        ? od.team_members.map(m => m.name).join(', ') 
+        : 'N/A';
+        
       return [
         escapeStr(od.student_roll),
         escapeStr(od.student_name),
+        escapeStr(teamMembersNames),
         escapeStr(od.event_name),
         escapeStr(`${od.from_date} to ${od.to_date}`),
         escapeStr(od.my_individual_proof_status),
@@ -112,16 +117,20 @@ export const AdvisorODProofsView: React.FC = () => {
                   <th className="px-6 py-4 text-right">Remarks</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
-                {filteredRequests.map(od => (
-                  <tr key={od.id} className="hover:bg-slate-50 transition-colors">
+              {filteredRequests.map(od => (
+                <tbody key={od.id} className="divide-y divide-slate-100 border-b border-slate-200">
+                  {/* Lead / Main Requester Row */}
+                  <tr className="hover:bg-slate-50 transition-colors bg-white">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0">
-                          <User className="w-4 h-4" />
+                          {od.request_type === 'Team' ? <Users className="w-4 h-4" /> : <User className="w-4 h-4" />}
                         </div>
                         <div>
-                          <p className="font-bold text-slate-900">{od.student_name}</p>
+                          <p className="font-bold text-slate-900">
+                            {od.student_name}
+                            {od.request_type === 'Team' && <span className="ml-2 px-1.5 py-0.5 rounded text-[9px] font-bold bg-purple-100 text-purple-700">Lead</span>}
+                          </p>
                           <p className="text-[11px] font-semibold text-slate-500">{od.student_roll}</p>
                         </div>
                       </div>
@@ -152,8 +161,44 @@ export const AdvisorODProofsView: React.FC = () => {
                       {od.my_proof_remarks || '-'}
                     </td>
                   </tr>
-                ))}
-              </tbody>
+
+                  {/* Team Members Rows */}
+                  {od.request_type === 'Team' && od.team_members.map(m => (
+                    <tr key={m.student_id} className="bg-slate-50/50 hover:bg-slate-100 transition-colors">
+                      <td className="px-6 py-3 pl-16">
+                        <div>
+                          <p className="font-bold text-slate-800 text-sm">{m.name}</p>
+                          <p className="text-[10px] font-semibold text-slate-500">{m.roll_no}</p>
+                        </div>
+                      </td>
+                      <td className="px-6 py-3 text-xs text-slate-400 italic">
+                        ↳ Team Member
+                      </td>
+                      <td className="px-6 py-3">
+                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-black tracking-wider uppercase border ${
+                          m.individual_proof_status === 'VERIFIED' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                          m.individual_proof_status === 'SUBMITTED' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                          'bg-slate-50 text-slate-600 border-slate-200'
+                        }`}>
+                          {m.individual_proof_status || 'OPEN'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-3">
+                        {m.drive_link ? (
+                          <a href={m.drive_link} target="_blank" rel="noreferrer" className="text-indigo-600 hover:text-indigo-800 font-semibold underline underline-offset-2">
+                            View Link
+                          </a>
+                        ) : (
+                          <span className="text-slate-400 text-xs italic">Not provided</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-3 text-right text-slate-600 text-xs max-w-[200px] truncate">
+                        {m.remarks || '-'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              ))}
             </table>
           </div>
         </div>
