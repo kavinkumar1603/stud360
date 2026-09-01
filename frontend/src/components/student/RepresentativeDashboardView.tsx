@@ -7,10 +7,8 @@ import { Users, FileText, CheckCircle, Clock } from 'lucide-react';
 export const RepresentativeDashboardView: React.FC = () => {
   const { currentStudent, students, leaveApplications } = useApp();
 
-  // For representative, we already fetch leaves where advisor_id = currentStudent.advisor_id
-  const cohortStudents = students.filter(s => s.advisor_id === currentStudent.advisor_id);
-  
-  const totalStudents = cohortStudents.length;
+  // Representative sees all students and leaves across all batches
+  const totalStudents = students.length;
   const totalLeaves = leaveApplications.length;
   const approvedLeaves = leaveApplications.filter(l => l.advisor_status === 'APPROVED').length;
   const pendingLeaves = leaveApplications.filter(l => l.advisor_status === 'PENDING').length;
@@ -24,7 +22,7 @@ export const RepresentativeDashboardView: React.FC = () => {
           Class Representative Dashboard
         </h2>
         <p className="text-xs text-slate-500 mt-1 font-medium">
-          Overview of leave applications and approvals for your cohort.
+          Overview of leave applications and approvals for all batches in the portal.
         </p>
       </div>
 
