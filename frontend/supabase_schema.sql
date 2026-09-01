@@ -126,12 +126,4 @@ CREATE POLICY "Enable all access for all users" ON public.online_courses FOR ALL
 CREATE POLICY "Enable all access for all users" ON public.nptel_tracking FOR ALL USING (true);
 CREATE POLICY "Enable all access for all users" ON public.deadlines FOR ALL USING (true);
 
--- Insert Mock Data
-INSERT INTO public.advisors (id, name, department, email, title)
-VALUES 
-  ('a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d', 'Dr. Sarah Wilson', 'Computer Science', 'sarah.wilson@university.edu', 'Associate Professor');
 
-INSERT INTO public.students (id, roll_no, name, email, department, semester, advisor_id)
-VALUES 
-  ('123e4567-e89b-12d3-a456-426614174000', 'CB.EN.U4CYS22001', 'John Doe', 'john.doe@student.university.edu', 'Computer Science', 'Semester 6', 'a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d'),
-  ('f47ac10b-58cc-4372-a567-0e02b2c3d479', 'CB.EN.U4CYS22002', 'Jane Smith', 'jane.smith@student.university.edu', 'Computer Science', 'Semester 6', 'a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d');
