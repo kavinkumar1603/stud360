@@ -182,7 +182,7 @@ app.get('/api/data', authenticateToken, async (req, res) => {
         { data: leavesRes, error: leavesError }
       ] = await Promise.all([
         supabase.from('students').select('*').eq('id', id),
-        supabase.from('od_requests').select('*').eq('student_id', id).order('created_at', { ascending: false }),
+        supabase.from('od_requests').select('*').or(`student_id.eq.${id},team_members.cs.[{"student_id":"${id}"}]`).order('created_at', { ascending: false }),
         supabase.from('leave_applications').select('*').eq('student_id', id).order('created_at', { ascending: false })
       ]);
       
