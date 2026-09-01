@@ -174,36 +174,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     };
     fetchData();
-
-    // Poll for dynamic updates every 10 seconds to keep dashboards in sync
-    const intervalId = setInterval(async () => {
-      try {
-        const token = sessionStorage.getItem('token');
-        if (!token) return; // Don't poll if not logged in
-        
-        const response = await fetch(`${API_URL}/data`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (!response.ok) return;
-        const data = await response.json();
-        
-        if (data.odRequests) {
-          const mapped = data.odRequests.map((od: any) => ({
-            ...od,
-            academic_year: od.academic_year === '2024-2025' ? '2026-2027' : od.academic_year
-          }));
-          setOdRequests(prev => JSON.stringify(prev) !== JSON.stringify(mapped) ? mapped : prev);
-        }
-        
-        if (data.leaveApplications) {
-          setLeaveApplications(prev => JSON.stringify(prev) !== JSON.stringify(data.leaveApplications) ? data.leaveApplications : prev);
-        }
-      } catch (err) {
-        console.warn('Polling failed, backend might be unreachable');
-      }
-    }, 10000);
-
-    return () => clearInterval(intervalId);
   }, []);
 
   const login = (userId: string, targetRole: UserRole) => {
