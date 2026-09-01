@@ -20,6 +20,7 @@ CREATE TABLE public.advisors (
   phone text,
   title text NOT NULL,
   avatar text,
+  password_hash text,
   created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
@@ -35,7 +36,9 @@ CREATE TABLE public.students (
   year text,
   semester semester,
   advisor_id uuid REFERENCES public.advisors(id),
+  tutor_id uuid REFERENCES public.advisors(id),
   avatar text,
+  password_hash text,
   created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 

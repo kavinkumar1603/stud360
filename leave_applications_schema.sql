@@ -1,4 +1,4 @@
-﻿-- Create Leave Applications Table
+-- Create Leave Applications Table
 CREATE TYPE leave_type AS ENUM ('Personal', 'Medical');
 CREATE TYPE scholar_type AS ENUM ('Day Scholar', 'Hosteller');
 
@@ -8,6 +8,7 @@ CREATE TABLE public.leave_applications (
   student_name text NOT NULL,
   student_roll text NOT NULL,
   advisor_id uuid REFERENCES public.advisors(id) NOT NULL,
+  tutor_id uuid REFERENCES public.advisors(id),
   leave_type leave_type NOT NULL,
   scholar_type scholar_type NOT NULL,
   semester semester NOT NULL,
@@ -16,6 +17,7 @@ CREATE TABLE public.leave_applications (
   on_date date,
   no_of_days numeric NOT NULL,
   purpose text NOT NULL,
+  tutor_status request_status DEFAULT 'PENDING',
   advisor_status request_status DEFAULT 'PENDING' NOT NULL,
   created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );

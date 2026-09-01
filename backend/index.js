@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import { createClient } from '@supabase/supabase-js';
 import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
 
 dotenv.config();
 
@@ -62,9 +63,19 @@ app.post('/api/auth/login', async (req, res) => {
 
     if (advisors && advisors.length > 0) {
       const advisor = advisors[0];
-      if (pass === advisor.email) {
+      let isValid = false;
+      
+      if (advisor.password_hash) {
+        isValid = await bcrypt.compare(pass, advisor.password_hash);
+      } else {
+        isValid = pass === advisor.email;
+      }
+      
+      if (isValid) {
         const token = jwt.sign({ id: advisor.id, role: 'ADVISOR' }, JWT_SECRET, { expiresIn: '24h' });
-        return res.json({ token, user: { ...advisor, role: 'ADVISOR' } });
+        // Don't send password hash to client
+        const { password_hash, ...userWithoutHash } = advisor;
+        return res.json({ token, user: { ...userWithoutHash, role: 'ADVISOR' } });
       }
     }
 
@@ -81,9 +92,19 @@ app.post('/api/auth/login', async (req, res) => {
 
     if (students && students.length > 0) {
       const student = students[0];
-      if (pass === student.roll_no) {
+      let isValid = false;
+      
+      if (student.password_hash) {
+        isValid = await bcrypt.compare(pass, student.password_hash);
+      } else {
+        isValid = pass === student.roll_no;
+      }
+      
+      if (isValid) {
         const token = jwt.sign({ id: student.id, role: 'STUDENT' }, JWT_SECRET, { expiresIn: '24h' });
-        return res.json({ token, user: { ...student, role: 'STUDENT' } });
+        // Don't send password hash to client
+        const { password_hash, ...userWithoutHash } = student;
+        return res.json({ token, user: { ...userWithoutHash, role: 'STUDENT' } });
       }
     }
 
@@ -93,6 +114,59 @@ app.post('/api/auth/login', async (req, res) => {
     return res.status(500).json({ error: 'Internal server error' });
   }
 });
+
+// Change Password
+app.post('/api/auth/change-password', authenticateToken, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const { id, role } = req.user;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ error: 'Current and new password are required' });
+    }
+
+    const table = role === 'STUDENT' ? 'students' : 'advisors';
+    const { data: users, error: fetchError } = await supabase
+      .from(table)
+      .select('*')
+      .eq('id', id);
+
+    if (fetchError || !users || users.length === 0) {
+      return res.status(500).json({ error: 'User not found' });
+    }
+
+    const user = users[0];
+    let isCurrentValid = false;
+    
+    if (user.password_hash) {
+      isCurrentValid = await bcrypt.compare(currentPassword, user.password_hash);
+    } else {
+      isCurrentValid = currentPassword === (role === 'STUDENT' ? user.roll_no : user.email);
+    }
+
+    if (!isCurrentValid) {
+      return res.status(401).json({ error: 'Incorrect current password' });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const newPasswordHash = await bcrypt.hash(newPassword, salt);
+
+    const { error: updateError } = await supabase
+      .from(table)
+      .update({ password_hash: newPasswordHash })
+      .eq('id', id);
+
+    if (updateError) {
+      return res.status(500).json({ error: 'Failed to update password' });
+    }
+
+    return res.json({ success: true, message: 'Password updated successfully' });
+  } catch (error) {
+    console.error('Change password error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 
 // Fetch user-scoped data
 app.get('/api/data', authenticateToken, async (req, res) => {
@@ -147,7 +221,6 @@ app.get('/api/data', authenticateToken, async (req, res) => {
         { data: advRes },
         { data: stRes1 },
         { data: stRes2 },
-        { data: odRes },
         { data: lRes1 },
         { data: lRes2 },
         { data: clRes },
@@ -156,7 +229,6 @@ app.get('/api/data', authenticateToken, async (req, res) => {
         supabase.from('advisors').select('*').eq('id', id),
         supabase.from('students').select('*').eq('advisor_id', id),
         supabase.from('students').select('*').eq('tutor_id', id),
-        supabase.from('od_requests').select('*').eq('advisor_id', id).order('created_at', { ascending: false }),
         supabase.from('leave_applications').select('*').eq('advisor_id', id).order('created_at', { ascending: false }),
         supabase.from('leave_applications').select('*').eq('tutor_id', id).order('created_at', { ascending: false }),
         supabase.from('classes').select('*').eq('advisor_id', id).order('created_at', { ascending: true }),
@@ -170,7 +242,13 @@ app.get('/api/data', authenticateToken, async (req, res) => {
       (stRes2 || []).forEach(s => stMap.set(s.id, s));
       studentsData = Array.from(stMap.values());
       
-      odData = odRes || [];
+      const studentIds = Array.from(stMap.keys());
+      if (studentIds.length > 0) {
+        const { data: odRes } = await supabase.from('od_requests').select('*').in('student_id', studentIds).order('created_at', { ascending: false });
+        odData = odRes || [];
+      } else {
+        odData = [];
+      }
       
       const lMap = new Map();
       (lRes1 || []).forEach(l => lMap.set(l.id, l));
