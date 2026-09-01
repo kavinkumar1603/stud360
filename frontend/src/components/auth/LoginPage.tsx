@@ -71,7 +71,7 @@ export const LoginPage: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://stud360.onrender.com/api';
+      const API_URL = '/api';
       const response = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

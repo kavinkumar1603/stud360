@@ -73,7 +73,7 @@ interface AppContextType {
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://stud360.onrender.com/api';
+const API_URL = '/api';
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [role, setRole] = useState<UserRole>('STUDENT');

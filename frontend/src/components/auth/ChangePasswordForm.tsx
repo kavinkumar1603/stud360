@@ -36,7 +36,7 @@ export const ChangePasswordForm: React.FC = () => {
 
     try {
       const token = sessionStorage.getItem('token');
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://stud360.onrender.com/api';
+      const API_URL = '/api';
       const response = await fetch(`${API_URL}/auth/change-password`, {
         method: 'POST',
         headers: { 
