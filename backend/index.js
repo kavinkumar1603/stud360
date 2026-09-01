@@ -181,7 +181,7 @@ app.get('/api/data', authenticateToken, async (req, res) => {
         { data: odRes },
         { data: leavesRes, error: leavesError }
       ] = await Promise.all([
-        supabase.from('students').select('*').eq('id', id),
+        supabase.from('students').select('*'),
         supabase.from('od_requests').select('*').or(`student_id.eq.${id},team_members.cs.[{"student_id":"${id}"}]`).order('created_at', { ascending: false }),
         supabase.from('leave_applications').select('*').eq('student_id', id).order('created_at', { ascending: false })
       ]);
@@ -191,8 +191,9 @@ app.get('/api/data', authenticateToken, async (req, res) => {
       leavesData = leavesRes || [];
       
       if (studentsData.length > 0) {
-          const advId = studentsData[0].advisor_id;
-          const tutId = studentsData[0].tutor_id;
+          const currentStudent = studentsData.find(s => s.id === id) || studentsData[0];
+          const advId = currentStudent.advisor_id;
+          const tutId = currentStudent.tutor_id;
           const ids = [advId, tutId].filter(Boolean);
           
           const queries = [];
