@@ -189,8 +189,8 @@ app.get('/api/data', authenticateToken, async (req, res) => {
       studentsData = studentRes || [];
       odData = odRes || [];
       leavesData = leavesRes || [];
-      console.log(`[GET /api/data] STUDENT leaves count: ${leavesData.length}. Error? ${leavesError?.message}`);
-            if (studentsData.length > 0) {
+      
+      if (studentsData.length > 0) {
           const advId = studentsData[0].advisor_id;
           const tutId = studentsData[0].tutor_id;
           const ids = [advId, tutId].filter(Boolean);
