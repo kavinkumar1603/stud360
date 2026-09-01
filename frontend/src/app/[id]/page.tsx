@@ -140,7 +140,9 @@ export default function DashboardRoute({ params }: { params: Promise<{ id: strin
           onOpenApplyLeave={() => setIsApplyLeaveOpen(true)}
         />
       ) : activeTab === 'student_profile' ? (
-        role === 'ADVISOR' ? <AdvisorProfileView /> : <StudentProfileView />
+        <StudentProfileView />
+      ) : activeTab === 'advisor_profile' && role === 'ADVISOR' ? (
+        <AdvisorProfileView />
       ) : activeTab === 'advisor_dashboard' && role === 'ADVISOR' ? (
         <AdvisorDashboardView
           onSelectODRequest={(od) => setSelectedOD(od)}

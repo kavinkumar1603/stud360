@@ -28,7 +28,8 @@ export type NavTab =
   | 'advisor_deadlines'
   | 'advisor_requests'
   | 'advisor_leaves'
-  | 'advisor_proofs';
+  | 'advisor_proofs'
+  | 'advisor_profile';
 
 interface SidebarLayoutProps {
   activeTab: NavTab;
@@ -167,21 +168,20 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({
                   <Briefcase className={`w-4 h-4 ${activeTab === 'student_leaves' ? 'text-white' : 'text-slate-400'}`} />
                   <span>My Leaves</span>
                 </button>
+                <button
+                  id="nav-student-profile"
+                  onClick={() => handleNavClick('student_profile')}
+                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                    activeTab === 'student_profile'
+                      ? 'bg-blue-600 text-white shadow-sm font-bold'
+                      : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                  }`}
+                >
+                  <User className={`w-4 h-4 ${activeTab === 'student_profile' ? 'text-white' : 'text-slate-400'}`} />
+                  <span>Profile Settings</span>
+                </button>
               </>
             )}
-
-            <button
-              id="nav-student-profile"
-              onClick={() => handleNavClick('student_profile')}
-              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                activeTab === 'student_profile'
-                  ? 'bg-blue-600 text-white shadow-sm font-bold'
-                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-              }`}
-            >
-              <User className={`w-4 h-4 ${activeTab === 'student_profile' ? 'text-white' : 'text-slate-400'}`} />
-              <span>Profile Settings</span>
-            </button>
           </div>
 
           {/* ADVISOR TOOLS SECTION - STRICT RBAC: ONLY visible when role === 'ADVISOR' */}
@@ -291,6 +291,19 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({
                   </button>
                 </>
               )}
+
+              <button
+                id="nav-advisor-profile"
+                onClick={() => handleNavClick('advisor_profile')}
+                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                  activeTab === 'advisor_profile'
+                    ? 'bg-amber-600 text-white shadow-sm font-bold'
+                    : 'text-slate-600 hover:bg-amber-50 hover:text-amber-900'
+                }`}
+              >
+                <User className={`w-4 h-4 ${activeTab === 'advisor_profile' ? 'text-white' : 'text-amber-500'}`} />
+                <span>Profile Settings</span>
+              </button>
             </div>
           )}
 
