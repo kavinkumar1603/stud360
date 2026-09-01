@@ -37,6 +37,7 @@ CREATE TABLE public.students (
   semester semester,
   advisor_id uuid REFERENCES public.advisors(id),
   tutor_id uuid REFERENCES public.advisors(id),
+  is_representative boolean DEFAULT false,
   avatar text,
   password_hash text,
   created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL

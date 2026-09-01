@@ -9,6 +9,18 @@ export const RepresentativeDashboardView: React.FC = () => {
 
   // Representative sees all students and leaves across all batches
   const totalStudents = students.length;
+  
+  // Calculate how many students are on leave today (approved leaves only)
+  const today = new Date().toISOString().split('T')[0];
+  const todaysLeaves = leaveApplications.filter(l => {
+    if (l.advisor_status !== 'APPROVED') return false;
+    if (l.no_of_days === 1) {
+      return l.on_date === today;
+    } else {
+      return l.from_date && l.to_date && l.from_date <= today && l.to_date >= today;
+    }
+  }).length;
+
   const totalLeaves = leaveApplications.length;
   const approvedLeaves = leaveApplications.filter(l => l.advisor_status === 'APPROVED').length;
   const pendingLeaves = leaveApplications.filter(l => l.advisor_status === 'PENDING').length;
@@ -43,8 +55,8 @@ export const RepresentativeDashboardView: React.FC = () => {
             <FileText className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Leaves</p>
-            <p className="text-2xl font-black text-slate-900">{totalLeaves}</p>
+            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">On Leave Today</p>
+            <p className="text-2xl font-black text-slate-900">{todaysLeaves}</p>
           </div>
         </div>
 
@@ -85,34 +97,52 @@ export const RepresentativeDashboardView: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {leaveApplications.map(leave => (
-                <tr key={leave.id} className="hover:bg-slate-50 transition-colors">
-                  <td className="px-6 py-4">
-                    <p className="font-bold text-slate-900">{leave.student_name}</p>
-                    <p className="text-[11px] font-semibold text-slate-500">{leave.student_roll}</p>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-100 text-slate-700">
-                      {leave.leave_type}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <p className="font-semibold text-slate-800">{leave.no_of_days} Day(s)</p>
-                    <p className="text-[11px] text-slate-500">
-                      {leave.no_of_days === 1 ? leave.on_date : `${leave.from_date} to ${leave.to_date}`}
-                    </p>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-black tracking-wider uppercase border ${
-                      leave.advisor_status === 'APPROVED' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                      leave.advisor_status === 'REJECTED' ? 'bg-red-50 text-red-700 border-red-200' :
-                      'bg-amber-50 text-amber-700 border-amber-200'
-                    }`}>
-                      {leave.advisor_status}
-                    </span>
-                  </td>
-                </tr>
-              ))}
+              {leaveApplications.map(leave => {
+                let isToday = false;
+                if (leave.no_of_days === 1) {
+                  isToday = leave.on_date === today;
+                } else if (leave.from_date && leave.to_date) {
+                  isToday = leave.from_date <= today && leave.to_date >= today;
+                }
+
+                return (
+                  <tr key={leave.id} className={`transition-colors ${isToday && leave.advisor_status === 'APPROVED' ? 'bg-purple-50/50 hover:bg-purple-50' : 'hover:bg-slate-50'}`}>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <div>
+                          <p className="font-bold text-slate-900">{leave.student_name}</p>
+                          <p className="text-[11px] font-semibold text-slate-500">{leave.student_roll}</p>
+                        </div>
+                        {isToday && leave.advisor_status === 'APPROVED' && (
+                          <span className="ml-2 px-2 py-0.5 rounded text-[9px] font-bold bg-purple-100 text-purple-700 uppercase tracking-wider">
+                            Absent Today
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-100 text-slate-700">
+                        {leave.leave_type}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <p className="font-semibold text-slate-800">{leave.no_of_days} Day(s)</p>
+                      <p className="text-[11px] text-slate-500">
+                        {leave.no_of_days === 1 ? leave.on_date : `${leave.from_date} to ${leave.to_date}`}
+                      </p>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <span className={`px-2.5 py-1 rounded-full text-[10px] font-black tracking-wider uppercase border ${
+                        leave.advisor_status === 'APPROVED' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                        leave.advisor_status === 'REJECTED' ? 'bg-red-50 text-red-700 border-red-200' :
+                        'bg-amber-50 text-amber-700 border-amber-200'
+                      }`}>
+                        {leave.advisor_status}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
               {leaveApplications.length === 0 && (
                 <tr>
                   <td colSpan={4} className="px-6 py-12 text-center text-slate-500 text-sm">

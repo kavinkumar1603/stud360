@@ -176,17 +176,26 @@ app.get('/api/data', authenticateToken, async (req, res) => {
     let studentsData = [], advisorsData = [], odData = [], deadlinesData = [], classesData = [], leavesData = [];
     
     if (role === 'STUDENT') {
+      const { data: studentRes } = await supabase.from('students').select('*');
+      studentsData = studentRes || [];
+      const currentStudent = studentsData.find(s => s.id === id) || studentsData[0];
+      
+      let leavesQuery = supabase.from('leave_applications').select('*').order('created_at', { ascending: false });
+      if (currentStudent && currentStudent.is_representative) {
+        // Representative gets to see ALL leaves across all batches in the portal
+        // No filter applied to leavesQuery here.
+      } else {
+        leavesQuery = leavesQuery.eq('student_id', id);
+      }
+
       const [
-        { data: studentRes },
         { data: odRes },
         { data: leavesRes, error: leavesError }
       ] = await Promise.all([
-        supabase.from('students').select('*'),
         supabase.from('od_requests').select('*').or(`student_id.eq.${id},team_members.cs.[{"student_id":"${id}"}]`).order('created_at', { ascending: false }),
-        supabase.from('leave_applications').select('*').eq('student_id', id).order('created_at', { ascending: false })
+        leavesQuery
       ]);
       
-      studentsData = studentRes || [];
       odData = odRes || [];
       leavesData = leavesRes || [];
       
@@ -401,6 +410,35 @@ app.delete('/api/deadlines/:id', authenticateToken, async (req, res) => {
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+});
+
+// Toggle Student Representative Status
+app.post('/api/students/:id/representative', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { is_representative } = req.body;
+    
+    // Only ADVISOR can toggle this
+    if (req.user.role !== 'ADVISOR') {
+      return res.status(403).json({ error: 'Only advisors can assign representatives' });
+    }
+
+    const { data, error } = await supabase
+      .from('students')
+      .update({ is_representative })
+      .eq('id', id)
+      .select();
+
+    if (error) {
+      console.error('Error updating representative status:', error);
+      return res.status(500).json({ error: 'Failed to update representative status' });
+    }
+
+    res.json({ success: true, student: data[0] });
+  } catch (error) {
+    console.error('Toggle representative error:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 

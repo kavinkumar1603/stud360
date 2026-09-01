@@ -1,0 +1,1 @@
+import jwt from 'jsonwebtoken'; const token = jwt.sign({ id: '225f3fce-c0ba-4c34-90fd-b1348f69c2fe', role: 'STUDENT' }, 'super_secret_jwt_key_change_in_production'); fetch('http://127.0.0.1:5000/api/data', { headers: { 'Authorization': 'Bearer ' + token } }).then(res => res.json()).then(data => console.log(data.odRequests ? data.odRequests.length : data)).catch(console.error);

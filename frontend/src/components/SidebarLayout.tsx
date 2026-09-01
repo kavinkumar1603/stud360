@@ -22,6 +22,7 @@ export type NavTab =
   | 'student_dashboard'
   | 'student_requests'
   | 'student_leaves'
+  | 'student_rep_dashboard'
   | 'student_profile'
   | 'advisor_dashboard'
   | 'advisor_students'
@@ -168,6 +169,21 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({
                   <Briefcase className={`w-4 h-4 ${activeTab === 'student_leaves' ? 'text-white' : 'text-slate-400'}`} />
                   <span>My Leaves</span>
                 </button>
+                
+                {currentStudent?.is_representative && (
+                  <button
+                    id="nav-student-rep-dashboard"
+                    onClick={() => handleNavClick('student_rep_dashboard')}
+                    className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                      activeTab === 'student_rep_dashboard'
+                        ? 'bg-blue-600 text-white shadow-sm font-bold'
+                        : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                    }`}
+                  >
+                    <Users className={`w-4 h-4 ${activeTab === 'student_rep_dashboard' ? 'text-white' : 'text-slate-400'}`} />
+                    <span>Class Dashboard</span>
+                  </button>
+                )}
                 <button
                   id="nav-student-profile"
                   onClick={() => handleNavClick('student_profile')}

@@ -1,0 +1,1 @@
+import jwt from 'jsonwebtoken'; const token = jwt.sign({ id: '89391e7d-b51a-4a7a-97b0-a563cddf974f', role: 'ADVISOR' }, 'super_secret_jwt_key_change_in_production'); fetch('https://stud360.onrender.com/api/data', { headers: { 'Authorization': 'Bearer ' + token } }).then(res => res.json()).then(data => console.log(JSON.stringify(data.odRequests, null, 2))).catch(console.error);

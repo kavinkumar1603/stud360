@@ -9,6 +9,7 @@ import { StudentProfileView } from '@/components/student/StudentProfileView';
 import { ApplyODModal } from '@/components/student/ApplyODModal';
 import { ApplyLeaveModal } from '@/components/student/ApplyLeaveModal';
 import { LeaveApplicationsListView } from '@/components/student/LeaveApplicationsListView';
+import { RepresentativeDashboardView } from '@/components/student/RepresentativeDashboardView';
 import { MyStudentsView } from '@/components/advisor/MyStudentsView';
 import { AdvisorODRequestsView } from '@/components/advisor/AdvisorODRequestsView';
 import { AdvisorLeaveRequestsView } from '@/components/advisor/AdvisorLeaveRequestsView';
@@ -139,6 +140,8 @@ export default function DashboardRoute({ params }: { params: Promise<{ id: strin
         <LeaveApplicationsListView
           onOpenApplyLeave={() => setIsApplyLeaveOpen(true)}
         />
+      ) : activeTab === 'student_rep_dashboard' && currentStudent?.is_representative ? (
+        <RepresentativeDashboardView />
       ) : activeTab === 'student_profile' ? (
         <StudentProfileView />
       ) : activeTab === 'advisor_profile' && role === 'ADVISOR' ? (
