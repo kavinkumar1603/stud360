@@ -69,6 +69,7 @@ interface AppContextType {
   advisorReviewLeave: (id: string, status: AdvisorStatus) => Promise<void>;
   tutorReviewLeave: (id: string, status: AdvisorStatus) => Promise<void>;
   deleteLeaveApplication: (id: string) => Promise<void>;
+  toggleRepresentativeStatus: (studentId: string, isRep: boolean) => Promise<void>;
   resetToDefaultData: () => void;
 }
 
@@ -621,6 +622,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  const toggleRepresentativeStatus = async (studentId: string, isRep: boolean) => {
+    try {
+      const res = await fetch(`${API_URL}/students/${studentId}/representative`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${sessionStorage.getItem('token')}`
+        },
+        body: JSON.stringify({ is_representative: isRep })
+      });
+      if (res.ok) {
+        setStudents((prev) => prev.map((s) => (s.id === studentId ? { ...s, is_representative: isRep } : s)));
+        addToast(`Student is ${isRep ? 'now' : 'no longer'} a Class Representative`);
+      } else {
+        addToast('Failed to update representative status', 'error');
+      }
+    } catch (error) {
+      console.error(error);
+      addToast('Failed to connect to server', 'error');
+    }
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -661,6 +684,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         advisorReviewLeave,
         tutorReviewLeave,
         deleteLeaveApplication,
+        toggleRepresentativeStatus,
         resetToDefaultData
       }}
     >

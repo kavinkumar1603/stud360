@@ -28,7 +28,7 @@ interface DisplayClass {
 }
 
 export const MyStudentsView: React.FC<MyStudentsViewProps> = ({ onSelectStudent }) => {
-  const { currentAdvisor, students, odRequests, classes, addStudent, addClass, removeClass } = useApp();
+  const { currentAdvisor, students, odRequests, classes, addStudent, addClass, removeClass, toggleRepresentativeStatus } = useApp();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddStudentModalOpen, setIsAddStudentModalOpen] = useState(false);
@@ -249,16 +249,31 @@ export const MyStudentsView: React.FC<MyStudentsViewProps> = ({ onSelectStudent 
                       </td>
 
                       {/* ACTION / PENDING OD */}
-                      <td className="py-3.5 px-4 text-center">
-                        {pendingCount > 0 ? (
-                          <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800">
-                            {pendingCount} Pending OD
-                          </span>
-                        ) : (
-                          <span className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200">
-                            View Profile →
-                          </span>
-                        )}
+                      <td className="py-3.5 px-4">
+                        <div className="flex items-center justify-end gap-3">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (window.confirm(`Are you sure you want to ${st.is_representative ? 'remove' : 'make'} ${st.name} a class representative?`)) {
+                                toggleRepresentativeStatus(st.id, !st.is_representative);
+                              }
+                            }}
+                            className={`p-1.5 rounded-lg transition-colors ${st.is_representative ? 'text-amber-500 bg-amber-50 hover:bg-amber-100' : 'text-slate-300 hover:text-amber-500 hover:bg-slate-100'}`}
+                            title={st.is_representative ? "Remove Representative Privilege" : "Make Class Representative"}
+                          >
+                            <svg className="w-4 h-4" fill={st.is_representative ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path></svg>
+                          </button>
+
+                          {pendingCount > 0 ? (
+                            <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 shrink-0">
+                              {pendingCount} Pending OD
+                            </span>
+                          ) : (
+                            <span className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 shrink-0">
+                              View Profile →
+                            </span>
+                          )}
+                        </div>
                       </td>
 
                     </tr>

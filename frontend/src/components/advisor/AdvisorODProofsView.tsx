@@ -162,41 +162,7 @@ export const AdvisorODProofsView: React.FC = () => {
                     </td>
                   </tr>
 
-                  {/* Team Members Rows */}
-                  {od.request_type === 'Team' && od.team_members.map(m => (
-                    <tr key={m.student_id} className="bg-slate-50/50 hover:bg-slate-100 transition-colors">
-                      <td className="px-6 py-3 pl-16">
-                        <div>
-                          <p className="font-bold text-slate-800 text-sm">{m.name}</p>
-                          <p className="text-[10px] font-semibold text-slate-500">{m.roll_no}</p>
-                        </div>
-                      </td>
-                      <td className="px-6 py-3 text-xs text-slate-400 italic">
-                        ↳ Team Member
-                      </td>
-                      <td className="px-6 py-3">
-                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-black tracking-wider uppercase border ${
-                          m.individual_proof_status === 'VERIFIED' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                          m.individual_proof_status === 'SUBMITTED' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                          'bg-slate-50 text-slate-600 border-slate-200'
-                        }`}>
-                          {m.individual_proof_status || 'OPEN'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-3">
-                        {m.drive_link ? (
-                          <a href={m.drive_link} target="_blank" rel="noreferrer" className="text-indigo-600 hover:text-indigo-800 font-semibold underline underline-offset-2">
-                            View Link
-                          </a>
-                        ) : (
-                          <span className="text-slate-400 text-xs italic">Not provided</span>
-                        )}
-                      </td>
-                      <td className="px-6 py-3 text-right text-slate-600 text-xs max-w-[200px] truncate">
-                        {m.remarks || '-'}
-                      </td>
-                    </tr>
-                  ))}
+                  {/* Team Members Rows (Removed per user request) */}
                 </tbody>
               ))}
             </table>

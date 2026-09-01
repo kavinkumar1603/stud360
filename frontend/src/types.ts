@@ -100,6 +100,7 @@ export interface Student {
   advisor_id: string;
   tutor_id?: string;
   class_id?: string;
+  is_representative?: boolean;
   avatar?: string;
 }
 
