@@ -119,7 +119,7 @@ ALTER TABLE public.nptel_tracking ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.deadlines ENABLE ROW LEVEL SECURITY;
 
 -- Create Policies (Allowing all for now since there's no real authentication yet)
-CREATE POLICY "Enable read access for all users" ON public.advisors FOR SELECT USING (true);
+CREATE POLICY "Enable all access for all users" ON public.advisors FOR ALL USING (true);
 CREATE POLICY "Enable all access for all users" ON public.students FOR ALL USING (true);
 CREATE POLICY "Enable all access for all users" ON public.od_requests FOR ALL USING (true);
 CREATE POLICY "Enable all access for all users" ON public.online_courses FOR ALL USING (true);
