@@ -635,12 +635,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (res.ok) {
         setStudents((prev) => prev.map((s) => (s.id === studentId ? { ...s, is_representative: isRep } : s)));
         addToast(`Student is ${isRep ? 'now' : 'no longer'} a Class Representative`);
+      } else if (res.status === 404) {
+        // Fallback: If backend is outdated/not deployed, update directly via Supabase
+        const { supabase } = await import('../utils/supabase');
+        const { error } = await supabase.from('students').update({ is_representative: isRep }).eq('id', studentId);
+        if (error) {
+           if (error.message?.includes('column "is_representative" of relation "students" does not exist')) {
+             addToast('Database schema error: Please run the SQL migration to add is_representative column.', 'error');
+           } else {
+             throw error;
+           }
+        } else {
+           setStudents((prev) => prev.map((s) => (s.id === studentId ? { ...s, is_representative: isRep } : s)));
+           addToast(`Student is ${isRep ? 'now' : 'no longer'} a Class Representative`);
+        }
       } else {
         addToast('Failed to update representative status', 'error');
       }
     } catch (error) {
       console.error(error);
-      addToast('Failed to connect to server', 'error');
+      addToast('Failed to connect to server or update database', 'error');
     }
   };
 
