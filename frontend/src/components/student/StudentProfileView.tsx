@@ -4,6 +4,8 @@ import React from 'react';
 import { useApp } from '../../context/AppContext';
 import { User, Mail, GraduationCap, Building, ShieldCheck } from 'lucide-react';
 
+import { ChangePasswordForm } from '../auth/ChangePasswordForm';
+
 export const StudentProfileView: React.FC = () => {
   const { currentStudent, advisors, odRequests } = useApp();
 
@@ -92,6 +94,10 @@ export const StudentProfileView: React.FC = () => {
           </div>
         </div>
 
+        {/* Change Password Form */}
+        <div className="md:col-span-2">
+          <ChangePasswordForm />
+        </div>
       </div>
 
     </div>
