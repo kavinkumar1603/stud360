@@ -196,12 +196,6 @@ export const LoginPage: React.FC = () => {
                   >
                     Password
                   </label>
-                  <a
-                    href="#"
-                    className="text-[11px] font-bold text-blue-600 hover:text-blue-700 hover:underline underline-offset-2"
-                  >
-                    Forgot password?
-                  </a>
                 </div>
                 <div className="relative group">
                   <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-600 transition-colors">
@@ -253,23 +247,7 @@ export const LoginPage: React.FC = () => {
               </button>
             </form>
 
-            {/* Role hint strip */}
-            <div className="mt-6 pt-5 border-t border-slate-100 grid grid-cols-2 gap-2.5">
-              <div className="flex items-center gap-2.5 rounded-xl bg-blue-50/70 border border-blue-100 px-3 py-2.5">
-                <GraduationCap className="w-4 h-4 text-blue-600 shrink-0" />
-                <div className="leading-tight min-w-0">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-blue-700">Student</p>
-                  <p className="text-[10px] text-slate-500 font-medium truncate">Use roll number</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2.5 rounded-xl bg-amber-50/70 border border-amber-100 px-3 py-2.5">
-                <ShieldCheck className="w-4 h-4 text-amber-600 shrink-0" />
-                <div className="leading-tight min-w-0">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-amber-700">Advisor</p>
-                  <p className="text-[10px] text-slate-500 font-medium truncate">Use email ID</p>
-                </div>
-              </div>
-            </div>
+
           </div>
 
           {/* Legal footer */}
