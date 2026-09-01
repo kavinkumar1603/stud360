@@ -161,7 +161,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           setRole(storedUserRole as any);
           if (storedUserRole === 'STUDENT') {
             const found = data.students?.find((s: Student) => s.id === storedUserId);
-            if (found) setCurrentStudent(found);
+            if (found) {
+              setCurrentStudent(found);
+              // Fallback: If deployed backend is outdated, fetch all leaves manually for representative
+              if (found.is_representative) {
+                try {
+                  const { supabase } = await import('../utils/supabase');
+                  const { data: allLeaves } = await supabase.from('leave_applications').select('*').order('created_at', { ascending: false });
+                  if (allLeaves) {
+                    setLeaveApplications(allLeaves);
+                  }
+                } catch (e) {
+                  console.error('Failed to fetch fallback leaves', e);
+                }
+              }
+            }
           } else {
             const found = data.advisors?.find((a: Advisor) => a.id === storedUserId);
             if (found) setCurrentAdvisor(found);

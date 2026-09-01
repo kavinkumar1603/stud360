@@ -1,11 +1,14 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { Users, FileText, CheckCircle, Clock } from 'lucide-react';
 
 export const RepresentativeDashboardView: React.FC = () => {
   const { currentStudent, students, leaveApplications } = useApp();
+  const [filter, setFilter] = useState<'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED'>('ALL');
+  
+  const filteredLeaves = leaveApplications.filter(l => filter === 'ALL' || l.advisor_status === filter);
 
   // Representative sees all students and leaves across all batches
   const totalStudents = students.length;
@@ -83,8 +86,21 @@ export const RepresentativeDashboardView: React.FC = () => {
 
       {/* Leave List */}
       <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-        <div className="p-5 border-b border-slate-100 flex items-center justify-between">
-          <h3 className="text-sm font-bold text-slate-900">Recent Leave Applications</h3>
+        <div className="p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <h3 className="text-sm font-bold text-slate-900">Leave Applications</h3>
+          <div className="flex bg-slate-100 p-1 rounded-lg">
+            {(['ALL', 'PENDING', 'APPROVED', 'REJECTED'] as const).map(f => (
+              <button
+                key={f}
+                onClick={() => setFilter(f)}
+                className={`px-4 py-1.5 rounded-md text-[11px] font-bold transition-all ${
+                  filter === f ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                }`}
+              >
+                {f}
+              </button>
+            ))}
+          </div>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm whitespace-nowrap">
@@ -97,7 +113,7 @@ export const RepresentativeDashboardView: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {leaveApplications.map(leave => {
+              {filteredLeaves.map(leave => {
                 let isToday = false;
                 if (leave.no_of_days === 1) {
                   isToday = leave.on_date === today;
@@ -143,10 +159,10 @@ export const RepresentativeDashboardView: React.FC = () => {
                   </tr>
                 );
               })}
-              {leaveApplications.length === 0 && (
+              {filteredLeaves.length === 0 && (
                 <tr>
                   <td colSpan={4} className="px-6 py-12 text-center text-slate-500 text-sm">
-                    No leave applications found for your cohort.
+                    No leave applications found matching your filter.
                   </td>
                 </tr>
               )}
