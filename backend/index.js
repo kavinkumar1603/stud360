@@ -176,14 +176,26 @@ app.get('/api/data', authenticateToken, async (req, res) => {
     let studentsData = [], advisorsData = [], odData = [], deadlinesData = [], classesData = [], leavesData = [];
     
     if (role === 'STUDENT') {
-      const { data: studentRes } = await supabase.from('students').select('*');
-      studentsData = studentRes || [];
-      const currentStudent = studentsData.find(s => s.id === id) || studentsData[0];
+      const { data: studentRes } = await supabase.from('students').select('id, roll_no, name, email, department, section, year, semester, advisor_id, tutor_id, class_id, is_representative, avatar').eq('id', id).single();
+      const currentStudent = studentRes;
+      
+      // Need other students for OD team members search (same department for security)
+      let studentsQuery = supabase.from('students').select('id, roll_no, name, email, department, section, year, semester, class_id, avatar, is_representative');
+      if (currentStudent && currentStudent.department) {
+        studentsQuery = studentsQuery.eq('department', currentStudent.department);
+      }
+      const { data: allStudentsRes } = await studentsQuery;
+      studentsData = allStudentsRes || (currentStudent ? [currentStudent] : []);
       
       let leavesQuery = supabase.from('leave_applications').select('*').order('created_at', { ascending: false });
       if (currentStudent && currentStudent.is_representative) {
-        // Representative gets to see ALL leaves across all batches in the portal
-        // No filter applied to leavesQuery here.
+        // Representative gets to see leaves for students in their department
+        const validStudentIds = studentsData.map(s => s.id);
+        if (validStudentIds.length > 0) {
+            leavesQuery = leavesQuery.in('student_id', validStudentIds);
+        } else {
+            leavesQuery = leavesQuery.eq('student_id', id); // Fallback
+        }
       } else {
         leavesQuery = leavesQuery.eq('student_id', id);
       }
@@ -236,9 +248,9 @@ app.get('/api/data', authenticateToken, async (req, res) => {
         { data: clRes },
         { data: dlRes }
       ] = await Promise.all([
-        supabase.from('advisors').select('*').eq('id', id),
-        supabase.from('students').select('*').eq('advisor_id', id),
-        supabase.from('students').select('*').eq('tutor_id', id),
+        supabase.from('advisors').select('id, name, department, email, phone, title, avatar').eq('id', id),
+        supabase.from('students').select('id, roll_no, name, email, department, section, year, semester, advisor_id, tutor_id, class_id, is_representative, avatar').eq('advisor_id', id),
+        supabase.from('students').select('id, roll_no, name, email, department, section, year, semester, advisor_id, tutor_id, class_id, is_representative, avatar').eq('tutor_id', id),
         supabase.from('leave_applications').select('*').eq('advisor_id', id).order('created_at', { ascending: false }),
         supabase.from('leave_applications').select('*').eq('tutor_id', id).order('created_at', { ascending: false }),
         supabase.from('classes').select('*').eq('advisor_id', id).order('created_at', { ascending: true }),

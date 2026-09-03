@@ -8,14 +8,17 @@ export const RepresentativeDashboardView: React.FC = () => {
   const { currentStudent, students, leaveApplications } = useApp();
   const [filter, setFilter] = useState<'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED'>('ALL');
   
-  const filteredLeaves = leaveApplications.filter(l => filter === 'ALL' || l.advisor_status === filter);
+  // Representative should only see leaves for students in their same class (or department based on backend filter)
+  const validStudentIds = new Set(students.map(s => s.id));
+  const classLeaves = leaveApplications.filter(l => validStudentIds.has(l.student_id));
+  const filteredLeaves = classLeaves.filter(l => filter === 'ALL' || l.advisor_status === filter);
 
-  // Representative sees all students and leaves across all batches
+  // Representative sees students they have access to (their class/department)
   const totalStudents = students.length;
   
   // Calculate how many students are on leave today (approved leaves only)
   const today = new Date().toISOString().split('T')[0];
-  const todaysLeaves = leaveApplications.filter(l => {
+  const todaysLeaves = classLeaves.filter(l => {
     if (l.advisor_status !== 'APPROVED') return false;
     if (l.no_of_days === 1) {
       return l.on_date === today;
@@ -24,9 +27,9 @@ export const RepresentativeDashboardView: React.FC = () => {
     }
   }).length;
 
-  const totalLeaves = leaveApplications.length;
-  const approvedLeaves = leaveApplications.filter(l => l.advisor_status === 'APPROVED').length;
-  const pendingLeaves = leaveApplications.filter(l => l.advisor_status === 'PENDING').length;
+  const totalLeaves = classLeaves.length;
+  const approvedLeaves = classLeaves.filter(l => l.advisor_status === 'APPROVED').length;
+  const pendingLeaves = classLeaves.filter(l => l.advisor_status === 'PENDING').length;
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto pb-24">
