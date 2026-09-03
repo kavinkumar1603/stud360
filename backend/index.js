@@ -176,16 +176,24 @@ app.get('/api/data', authenticateToken, async (req, res) => {
     let studentsData = [], advisorsData = [], odData = [], deadlinesData = [], classesData = [], leavesData = [];
     
     if (role === 'STUDENT') {
-      const { data: studentRes } = await supabase.from('students').select('id, roll_no, name, email, department, section, year, semester, advisor_id, tutor_id, class_id, is_representative, avatar').eq('id', id).single();
+      const { data: studentRes } = await supabase.from('students').select('id, roll_no, name, email, phone, department, section, year, semester, advisor_id, tutor_id, class_id, is_representative, avatar').eq('id', id).single();
       const currentStudent = studentRes;
       
-      // Need other students for OD team members search (same department for security)
-      let studentsQuery = supabase.from('students').select('id, roll_no, name, email, department, section, year, semester, class_id, avatar, is_representative');
+      // Need other students for OD team members search but ONLY expose bare minimum
+      // We also include class_id so that representatives can filter leaves by their own class in the frontend.
+      let studentsQuery = supabase.from('students').select('id, roll_no, name, class_id');
+      
+      // Optional: limit to department if we still want that
       if (currentStudent && currentStudent.department) {
         studentsQuery = studentsQuery.eq('department', currentStudent.department);
       }
       const { data: allStudentsRes } = await studentsQuery;
-      studentsData = allStudentsRes || (currentStudent ? [currentStudent] : []);
+      
+      // Filter out the current student from the others list to avoid duplicates
+      const otherStudents = (allStudentsRes || []).filter(s => s.id !== id);
+      
+      // Combine them: current student gets full data, others get minimal data
+      studentsData = currentStudent ? [currentStudent, ...otherStudents] : [];
       
       let leavesQuery = supabase.from('leave_applications').select('*').order('created_at', { ascending: false });
       if (currentStudent && currentStudent.is_representative) {
