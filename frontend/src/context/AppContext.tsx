@@ -69,6 +69,7 @@ interface AppContextType {
   advisorReviewLeave: (id: string, status: AdvisorStatus) => Promise<void>;
   tutorReviewLeave: (id: string, status: AdvisorStatus) => Promise<void>;
   deleteLeaveApplication: (id: string) => Promise<void>;
+  updateLeaveInformedStatus: (id: string, is_informed: boolean) => Promise<void>;
   toggleRepresentativeStatus: (studentId: string, isRep: boolean) => Promise<void>;
   resetToDefaultData: () => void;
 }
@@ -636,6 +637,36 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  const updateLeaveInformedStatus = async (id: string, is_informed: boolean) => {
+    try {
+      const res = await fetch(`${API_URL}/leave-applications/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${sessionStorage.getItem('token')}` },
+        body: JSON.stringify({ is_informed })
+      });
+      
+      let updated;
+      if (!res.ok) {
+        if (res.status === 404) {
+          const { supabase } = await import('../utils/supabase');
+          const { data: updatedData, error } = await supabase.from('leave_applications').update({ is_informed }).eq('id', id).select().single();
+          if (error) throw error;
+          updated = updatedData;
+        } else {
+          throw new Error('Failed to update');
+        }
+      } else {
+        updated = await res.json();
+      }
+      
+      setLeaveApplications(prev => prev.map(l => l.id === id ? updated : l));
+      addToast(`Leave Application marked as ${is_informed ? 'Informed' : 'Not Informed'}`, 'success');
+    } catch (error) {
+      addToast('Error updating leave application informed status', 'error');
+      console.error('An error occurred');
+    }
+  };
+
   const toggleRepresentativeStatus = async (studentId: string, isRep: boolean) => {
     try {
       const res = await fetch(`${API_URL}/students/${studentId}/representative`, {
@@ -712,6 +743,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         advisorReviewLeave,
         tutorReviewLeave,
         deleteLeaveApplication,
+        updateLeaveInformedStatus,
         toggleRepresentativeStatus,
         resetToDefaultData
       }}

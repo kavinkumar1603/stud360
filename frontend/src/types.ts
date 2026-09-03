@@ -68,6 +68,7 @@ export interface LeaveApplication {
   purpose: string;
   tutor_status?: AdvisorStatus;
   advisor_status: AdvisorStatus;
+  is_informed?: boolean;
   created_at: string;
 }
 

@@ -14,7 +14,7 @@ export const AdvisorLeaveRequestsView: React.FC<AdvisorLeaveRequestsViewProps> =
   onSelectLeaveRequest,
   defaultFilter = 'PENDING'
 }) => {
-  const { currentAdvisor, leaveApplications, advisorReviewLeave, tutorReviewLeave, deleteLeaveApplication } = useApp();
+  const { currentAdvisor, leaveApplications, advisorReviewLeave, tutorReviewLeave, deleteLeaveApplication, updateLeaveInformedStatus } = useApp();
   const [activeFilter, setActiveFilter] = useState(defaultFilter);
   const [selectedSem, setSelectedSem] = useState<string>('ALL');
 
@@ -168,46 +168,66 @@ export const AdvisorLeaveRequestsView: React.FC<AdvisorLeaveRequestsViewProps> =
 
 
               {/* Action Buttons */}
-              <div className="flex items-center justify-end gap-2 pt-2">
-                <button
-                  onClick={(e) => handleDeleteLeave(e, l.id)}
-                  className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors"
-                  title="Delete Application"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-                
-                {getRelevantStatus(l) === 'PENDING' && (
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={(e) => { 
-                        e.stopPropagation(); 
-                        if (l.tutor_id === currentAdvisor?.id) {
-                          tutorReviewLeave(l.id, 'REJECTED');
-                        } else {
-                          advisorReviewLeave(l.id, 'REJECTED'); 
-                        }
+              <div className="flex items-center justify-between pt-2 mt-2 border-t border-slate-100">
+                <label className="flex items-center gap-2 cursor-pointer group" onClick={(e) => e.stopPropagation()}>
+                  <div className="relative flex items-center justify-center">
+                    <input
+                      type="checkbox"
+                      checked={l.is_informed || false}
+                      onChange={(e) => {
+                        updateLeaveInformedStatus(l.id, e.target.checked);
                       }}
-                      className="px-4 py-2 rounded-xl text-xs font-bold text-red-700 bg-red-50 hover:bg-red-100 transition-colors"
-                    >
-                      Reject
-                    </button>
-                    <button
-                      onClick={(e) => { 
-                        e.stopPropagation(); 
-                        if (l.tutor_id === currentAdvisor?.id) {
-                          tutorReviewLeave(l.id, 'APPROVED');
-                        } else {
-                          advisorReviewLeave(l.id, 'APPROVED'); 
-                        }
-                      }}
-                      className="px-4 py-2 rounded-xl text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors flex items-center gap-1"
-                    >
-                      <CheckCircle2 className="w-4 h-4" />
-                      Approve
-                    </button>
+                      className="peer sr-only"
+                    />
+                    <div className={`w-4 h-4 border rounded transition-colors ${l.is_informed ? 'bg-teal-500 border-teal-500' : 'bg-white border-slate-300 group-hover:border-teal-400'}`}></div>
+                    {l.is_informed && <CheckCircle2 className="absolute text-white w-3 h-3 pointer-events-none" />}
                   </div>
-                )}
+                  <span className="text-xs font-semibold text-slate-700 select-none">Informed</span>
+                </label>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={(e) => handleDeleteLeave(e, l.id)}
+                    className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors"
+                    title="Delete Application"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                  
+                  {getRelevantStatus(l) === 'PENDING' && (
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={(e) => { 
+                          e.stopPropagation(); 
+                          if (l.tutor_id === currentAdvisor?.id) {
+                            tutorReviewLeave(l.id, 'REJECTED');
+                          } else {
+                            advisorReviewLeave(l.id, 'REJECTED'); 
+                          }
+                        }}
+                        className="px-4 py-2 rounded-xl text-xs font-bold text-red-700 bg-red-50 hover:bg-red-100 transition-colors"
+                      >
+                        Reject
+                      </button>
+                      <button
+                        onClick={(e) => { 
+                          e.stopPropagation(); 
+                          if (l.tutor_id === currentAdvisor?.id) {
+                            tutorReviewLeave(l.id, 'APPROVED');
+                          } else {
+                            advisorReviewLeave(l.id, 'APPROVED'); 
+                          }
+                        }}
+                        disabled={!l.is_informed}
+                        title={!l.is_informed ? "Please mark as informed first" : ""}
+                        className="px-4 py-2 rounded-xl text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors flex items-center gap-1 disabled:opacity-50"
+                      >
+                        <CheckCircle2 className="w-4 h-4" />
+                        Approve
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           ))

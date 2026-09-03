@@ -21,7 +21,7 @@ interface LeaveDetailAdvisorViewProps {
 }
 
 export const LeaveDetailAdvisorView: React.FC<LeaveDetailAdvisorViewProps> = ({ leaveApplication, onBack }) => {
-  const { currentAdvisor, leaveApplications, advisorReviewLeave, tutorReviewLeave, deleteLeaveApplication } = useApp();
+  const { currentAdvisor, leaveApplications, advisorReviewLeave, tutorReviewLeave, deleteLeaveApplication, updateLeaveInformedStatus } = useApp();
 
   // Find live state from context
   const currentLeave = leaveApplications?.find((r) => r.id === leaveApplication.id) || leaveApplication;
@@ -63,6 +63,12 @@ export const LeaveDetailAdvisorView: React.FC<LeaveDetailAdvisorViewProps> = ({ 
     } else {
       await advisorReviewLeave(currentLeave.id, 'REJECTED');
     }
+    setIsActionPending(false);
+  };
+
+  const toggleInformedStatus = async () => {
+    setIsActionPending(true);
+    await updateLeaveInformedStatus(currentLeave.id, !currentLeave.is_informed);
     setIsActionPending(false);
   };
 
@@ -178,6 +184,26 @@ export const LeaveDetailAdvisorView: React.FC<LeaveDetailAdvisorViewProps> = ({ 
             </div>
           </div>
 
+          {/* Informed Status */}
+          <div className="pt-4 border-t border-slate-100">
+            <label className="flex items-center gap-3 cursor-pointer group">
+              <div className="relative flex items-center justify-center">
+                <input
+                  type="checkbox"
+                  checked={currentLeave.is_informed || false}
+                  onChange={toggleInformedStatus}
+                  disabled={isActionPending}
+                  className="peer sr-only"
+                />
+                <div className={`w-5 h-5 border-2 rounded-md transition-colors ${currentLeave.is_informed ? 'bg-teal-500 border-teal-500' : 'bg-white border-slate-300 group-hover:border-teal-400'}`}></div>
+                {currentLeave.is_informed && <CheckCircle2 className="absolute text-white w-4 h-4 pointer-events-none" />}
+              </div>
+              <span className="text-sm font-semibold text-slate-700 select-none">
+                Parent/Guardian Informed
+              </span>
+            </label>
+          </div>
+
           {/* Advisor Actions (Only if PENDING) */}
           {relevantStatus === 'PENDING' && (
             <div className="pt-6 border-t border-slate-100 pb-2">
@@ -193,7 +219,8 @@ export const LeaveDetailAdvisorView: React.FC<LeaveDetailAdvisorViewProps> = ({ 
                 </button>
                 <button
                   onClick={handleApprove}
-                  disabled={isActionPending}
+                  disabled={isActionPending || !currentLeave.is_informed}
+                  title={!currentLeave.is_informed ? "Please inform parents/guardians first" : ""}
                   className="flex-1 inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700 transition-colors disabled:opacity-50 cursor-pointer"
                 >
                   <CheckCircle2 className="w-5 h-5" />
