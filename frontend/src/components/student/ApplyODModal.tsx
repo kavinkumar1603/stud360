@@ -55,8 +55,7 @@ export const ApplyODModal: React.FC<ApplyODModalProps> = ({ isOpen, onClose, onS
   };
 
   const todayStr = new Date().toLocaleDateString('en-CA'); // Gets YYYY-MM-DD reliably in local time
-  const isFutureDate = fromDate >= todayStr;
-  const isDateValid = fromDate && toDate && isValidDateRange(fromDate, toDate) && isFutureDate;
+  const isDateValid = fromDate && toDate && isValidDateRange(fromDate, toDate);
   const isEventFilled = eventName.trim().length > 0;
   const isTeamValid = requestType === 'Individual' || selectedTeamMembers.length >= 1;
 
@@ -334,8 +333,6 @@ export const ApplyODModal: React.FC<ApplyODModalProps> = ({ isOpen, onClose, onS
                     id="input-od-from-date"
                     type="date"
                     required
-                    min={todayStr}
-                    max="2027-12-31"
                     value={fromDate}
                     onChange={(e) => setFromDate(e.target.value)}
                     className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -352,8 +349,6 @@ export const ApplyODModal: React.FC<ApplyODModalProps> = ({ isOpen, onClose, onS
                     id="input-od-to-date"
                     type="date"
                     required
-                    min={fromDate || todayStr}
-                    max="2027-12-31"
                     value={toDate}
                     onChange={(e) => setToDate(e.target.value)}
                     className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -367,12 +362,6 @@ export const ApplyODModal: React.FC<ApplyODModalProps> = ({ isOpen, onClose, onS
               <p className="text-xs text-red-500 flex items-center gap-1 mt-1">
                 <AlertCircle className="w-3.5 h-3.5" />
                 "To Date" must be on or after "From Date".
-              </p>
-            )}
-            {fromDate && fromDate < new Date().toLocaleDateString('en-CA') && (
-              <p className="text-xs text-red-500 flex items-center gap-1 mt-1">
-                <AlertCircle className="w-3.5 h-3.5" />
-                Cannot apply for past dates.
               </p>
             )}
 
