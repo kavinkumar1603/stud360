@@ -179,20 +179,23 @@ app.get('/api/data', authenticateToken, async (req, res) => {
       const { data: studentRes } = await supabase.from('students').select('id, roll_no, name, email, phone, department, section, year, semester, advisor_id, tutor_id, class_id, is_representative, avatar').eq('id', id).single();
       const currentStudent = studentRes;
       
-      // Need other students for OD team members search but ONLY expose bare minimum
-      // We also include class_id so that representatives can filter leaves by their own class in the frontend.
-      let studentsQuery = supabase.from('students').select('id, roll_no, name, class_id');
+      let otherStudents = [];
       
-      // Optional: limit to department if we still want that
-      if (currentStudent && currentStudent.department) {
-        studentsQuery = studentsQuery.eq('department', currentStudent.department);
+      // ONLY fetch other students if the current student is a representative
+      if (currentStudent && currentStudent.is_representative) {
+        let studentsQuery = supabase.from('students').select('id, roll_no, name, class_id');
+        // Limit to their class (or department) so they can monitor their own class's leaves
+        if (currentStudent.class_id) {
+          studentsQuery = studentsQuery.eq('class_id', currentStudent.class_id);
+        } else if (currentStudent.department) {
+          studentsQuery = studentsQuery.eq('department', currentStudent.department);
+        }
+        const { data: allStudentsRes } = await studentsQuery;
+        otherStudents = (allStudentsRes || []).filter(s => s.id !== id);
       }
-      const { data: allStudentsRes } = await studentsQuery;
       
-      // Filter out the current student from the others list to avoid duplicates
-      const otherStudents = (allStudentsRes || []).filter(s => s.id !== id);
-      
-      // Combine them: current student gets full data, others get minimal data
+      // Combine them: current student gets full data. 
+      // Regular students get NO other students. Representatives get bare minimal data for their class.
       studentsData = currentStudent ? [currentStudent, ...otherStudents] : [];
       
       let leavesQuery = supabase.from('leave_applications').select('*').order('created_at', { ascending: false });
