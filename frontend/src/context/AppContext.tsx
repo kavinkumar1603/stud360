@@ -498,12 +498,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const addLeaveApplication = async (data: { leave_type: LeaveType; scholar_type: ScholarType; semester: Semester; from_date?: string; to_date?: string; on_date?: string; no_of_days: number; purpose: string }) => {
     if (!currentStudent?.id) return;
     
+    const tutorObj = advisors.find((a) => a.id === currentStudent.tutor_id);
+    
     const newLeave = {
       student_id: currentStudent.id,
       student_name: currentStudent.name,
       student_roll: currentStudent.roll_no,
       advisor_id: currentStudent.advisor_id,
       tutor_id: currentStudent.tutor_id || null,
+      tutor_name: tutorObj ? tutorObj.name : null,
       ...data,
       tutor_status: 'PENDING',
       advisor_status: 'PENDING'

@@ -8,13 +8,26 @@ interface LeaveApplicationsListViewProps {
 }
 
 export const LeaveApplicationsListView: React.FC<LeaveApplicationsListViewProps> = ({ onOpenApplyLeave }) => {
-  const { currentStudent, leaveApplications } = useApp();
+  const { currentStudent, leaveApplications, advisors } = useApp();
   const [activeTabFilter, setActiveTabFilter] = useState<'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED'>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   // Fallback to empty array if leaveApplications is undefined
   const safeLeaves = leaveApplications || [];
   const myLeaves = safeLeaves.filter((l) => l.student_id === currentStudent.id);
+
+  const getTutorName = (l: LeaveApplication) => {
+    if (l.tutor_name) return l.tutor_name;
+    if (l.tutor_id) {
+      const tut = advisors?.find(a => a.id === l.tutor_id);
+      if (tut) return tut.name;
+    }
+    if (currentStudent?.tutor_id) {
+      const tut = advisors?.find(a => a.id === currentStudent.tutor_id);
+      if (tut) return tut.name;
+    }
+    return null;
+  };
 
   const getFinalStatus = (l: LeaveApplication) => {
       if (l.tutor_id && l.tutor_status === 'REJECTED') return 'REJECTED';
@@ -118,6 +131,11 @@ export const LeaveApplicationsListView: React.FC<LeaveApplicationsListViewProps>
                     <td className="py-4 px-6">
                       <div className="font-bold text-slate-900 text-xs">{l.leave_type} Leave</div>
                       <div className="text-[11px] text-slate-400 mt-0.5">{l.scholar_type}</div>
+                      {getTutorName(l) && (
+                        <div className="text-[10px] text-indigo-600 font-semibold mt-1">
+                          Tutor: {getTutorName(l)}
+                        </div>
+                      )}
                     </td>
 
                     {/* PURPOSE */}

@@ -1,6 +1,6 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import { X, Briefcase } from 'lucide-react';
+import { X, Briefcase, UserCheck } from 'lucide-react';
 import { LeaveType, ScholarType, Semester } from '../../types';
 
 interface ApplyLeaveModalProps {
@@ -10,7 +10,7 @@ interface ApplyLeaveModalProps {
 }
 
 export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({ isOpen, onClose, onSubmitted }) => {
-  const { addLeaveApplication, currentStudent } = useApp();
+  const { addLeaveApplication, currentStudent, advisors } = useApp();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [leaveType, setLeaveType] = useState<LeaveType>('Personal');
@@ -25,6 +25,9 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({ isOpen, onClos
   const [purpose, setPurpose] = useState('');
 
   if (!isOpen) return null;
+
+  const assignedTutor = advisors?.find((a) => a.id === currentStudent?.tutor_id);
+  const assignedAdvisor = advisors?.find((a) => a.id === currentStudent?.advisor_id);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,7 +78,7 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({ isOpen, onClos
             <div>
               <h2 className="text-lg font-bold text-slate-900">Apply for Leave</h2>
               <p className="text-xs text-slate-500">
-                Submit a leave application to your faculty advisor
+                Submit a leave application to your tutor & faculty advisor
               </p>
             </div>
           </div>
@@ -90,6 +93,25 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({ isOpen, onClos
         {/* Modal Body */}
         <div className="p-6 overflow-y-auto custom-scrollbar">
           <form id="apply-leave-form" onSubmit={handleSubmit} className="space-y-6">
+            
+            {/* Tutor & Advisor Info Banner */}
+            <div className="bg-gradient-to-r from-indigo-50 to-teal-50 border border-indigo-100 rounded-xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded-lg bg-indigo-100 text-indigo-700">
+                  <UserCheck className="w-4 h-4" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-indigo-500 block">Assigned Tutor</span>
+                  <span className="font-bold text-indigo-900 text-sm">{assignedTutor?.name || 'Tutor Assigned'}</span>
+                </div>
+              </div>
+              {assignedAdvisor && (
+                <div className="sm:text-right border-t sm:border-t-0 pt-2 sm:pt-0 border-indigo-100">
+                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-teal-600 block">Faculty Advisor</span>
+                  <span className="font-bold text-teal-900 text-sm">{assignedAdvisor.name}</span>
+                </div>
+              )}
+            </div>
             <div className="grid grid-cols-2 gap-5">
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Leave Type <span className="text-red-500">*</span></label>

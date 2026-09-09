@@ -11,7 +11,8 @@ import {
   XCircle,
   Clock,
   Trash2,
-  Briefcase
+  Briefcase,
+  UserCheck
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -21,12 +22,28 @@ interface LeaveDetailAdvisorViewProps {
 }
 
 export const LeaveDetailAdvisorView: React.FC<LeaveDetailAdvisorViewProps> = ({ leaveApplication, onBack }) => {
-  const { currentAdvisor, leaveApplications, advisorReviewLeave, tutorReviewLeave, deleteLeaveApplication, updateLeaveInformedStatus } = useApp();
+  const { currentAdvisor, leaveApplications, advisors, students, advisorReviewLeave, tutorReviewLeave, deleteLeaveApplication, updateLeaveInformedStatus } = useApp();
 
   // Find live state from context
   const currentLeave = leaveApplications?.find((r) => r.id === leaveApplication.id) || leaveApplication;
 
   const [isActionPending, setIsActionPending] = useState(false);
+
+  const getTutorName = () => {
+    if (currentLeave.tutor_name) return currentLeave.tutor_name;
+    if (currentLeave.tutor_id) {
+      const tut = advisors?.find(a => a.id === currentLeave.tutor_id);
+      if (tut) return tut.name;
+    }
+    const st = students?.find(s => s.id === currentLeave.student_id);
+    if (st?.tutor_id) {
+      const tut = advisors?.find(a => a.id === st.tutor_id);
+      if (tut) return tut.name;
+    }
+    return null;
+  };
+
+  const tutorName = getTutorName();
 
   const getRelevantStatus = (l: LeaveApplication) => {
     if (l.tutor_id === currentAdvisor?.id) {
@@ -125,6 +142,12 @@ export const LeaveDetailAdvisorView: React.FC<LeaveDetailAdvisorViewProps> = ({ 
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 text-slate-600 text-[10px] font-bold uppercase tracking-widest border border-slate-200">
                   {currentLeave.scholar_type}
                 </span>
+                {tutorName && (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-indigo-50 text-indigo-700 text-[10px] font-bold uppercase tracking-widest border border-indigo-100">
+                    <UserCheck className="w-3.5 h-3.5" />
+                    Tutor: {tutorName}
+                  </span>
+                )}
               </div>
               <h1 className="text-2xl font-black text-slate-900 tracking-tight">
                 {currentLeave.student_name}

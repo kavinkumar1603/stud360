@@ -17,22 +17,34 @@ export const AdvisorDashboardView: React.FC<AdvisorDashboardViewProps> = ({
   onSelectLeaveRequest,
   onNavigateTab
 }) => {
-  const { currentAdvisor, students, odRequests, leaveApplications, academicYear, semester } = useApp();
+  const { currentAdvisor, students, advisors, odRequests, leaveApplications, academicYear, semester } = useApp();
 
   const isTutor = currentAdvisor?.title === 'tutor';
 
   // Get cohort IDs
   const myStudentIds = students.filter(s => s.advisor_id === currentAdvisor?.id || s.tutor_id === currentAdvisor?.id).map(s => s.id);
 
-  // If Tutor -> Show Leaves metrics. If Advisor -> Show OD metrics.
-  
+  const getTutorName = (req: LeaveApplication) => {
+    if (req.tutor_name) return req.tutor_name;
+    if (req.tutor_id) {
+      const tut = advisors.find(a => a.id === req.tutor_id);
+      if (tut) return tut.name;
+    }
+    const student = students.find(s => s.id === req.student_id);
+    if (student?.tutor_id) {
+      const tut = advisors.find(a => a.id === student.tutor_id);
+      if (tut) return tut.name;
+    }
+    return null;
+  };
+
   // ADVISOR METRICS
   const cohortODs = odRequests.filter(od => myStudentIds.includes(od.student_id));
   const pendingODs = cohortODs.filter(od => od.advisor_status === 'PENDING');
 
-  // TUTOR METRICS
-  const cohortLeaves = (leaveApplications || []).filter(l => myStudentIds.includes(l.student_id));
-  const pendingLeaves = cohortLeaves.filter(l => l.tutor_status === 'PENDING');
+  // LEAVES METRICS
+  const cohortLeaves = (leaveApplications || []).filter(l => l.advisor_id === currentAdvisor?.id || l.tutor_id === currentAdvisor?.id || myStudentIds.includes(l.student_id));
+  const pendingLeaves = cohortLeaves.filter(l => isTutor ? l.tutor_status === 'PENDING' : l.advisor_status === 'PENDING');
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto pb-24">
@@ -120,7 +132,7 @@ export const AdvisorDashboardView: React.FC<AdvisorDashboardViewProps> = ({
                 <div 
                   key={req.id} 
                   onClick={() => {
-                    if (isTutor) {
+                    if (isTutor || 'leave_type' in req) {
                       onSelectLeaveRequest?.(req as LeaveApplication);
                     } else {
                       onSelectODRequest(req as ODRequest);
@@ -134,10 +146,12 @@ export const AdvisorDashboardView: React.FC<AdvisorDashboardViewProps> = ({
                     </div>
                     <div>
                       <p className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
-                        {student?.name || 'Unknown Student'}
+                        {student?.name || (req as LeaveApplication).student_name || 'Unknown Student'}
                       </p>
                       <p className="text-xs font-semibold text-slate-500 mt-0.5">
-                        {isTutor ? (req as LeaveApplication).leave_type : (req as ODRequest).event_category || (req as ODRequest).request_type}
+                        {isTutor || 'leave_type' in req 
+                          ? `${(req as LeaveApplication).leave_type} Leave ${getTutorName(req as LeaveApplication) ? `• Tutor: ${getTutorName(req as LeaveApplication)}` : ''}` 
+                          : (req as ODRequest).event_category || (req as ODRequest).request_type}
                       </p>
                     </div>
                   </div>
@@ -184,7 +198,7 @@ export const AdvisorDashboardView: React.FC<AdvisorDashboardViewProps> = ({
                 <div 
                   key={req.id} 
                   onClick={() => {
-                    if (isTutor) {
+                    if (isTutor || 'leave_type' in req) {
                       onSelectLeaveRequest?.(req as LeaveApplication);
                     } else {
                       onSelectODRequest(req as ODRequest);
@@ -198,10 +212,12 @@ export const AdvisorDashboardView: React.FC<AdvisorDashboardViewProps> = ({
                     </div>
                     <div>
                       <p className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
-                        {student?.name || 'Unknown Student'}
+                        {student?.name || (req as LeaveApplication).student_name || 'Unknown Student'}
                       </p>
                       <p className="text-xs font-semibold text-slate-500 mt-0.5">
-                        {isTutor ? (req as LeaveApplication).leave_type : (req as ODRequest).event_category || (req as ODRequest).request_type}
+                        {isTutor || 'leave_type' in req 
+                          ? `${(req as LeaveApplication).leave_type} Leave ${getTutorName(req as LeaveApplication) ? `• Tutor: ${getTutorName(req as LeaveApplication)}` : ''}` 
+                          : (req as ODRequest).event_category || (req as ODRequest).request_type}
                       </p>
                     </div>
                   </div>

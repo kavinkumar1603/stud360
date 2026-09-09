@@ -58,6 +58,7 @@ export interface LeaveApplication {
   student_roll: string;
   advisor_id: string;
   tutor_id?: string;
+  tutor_name?: string;
   leave_type: LeaveType;
   scholar_type: ScholarType;
   semester: Semester;

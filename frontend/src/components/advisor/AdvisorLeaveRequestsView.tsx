@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { LeaveApplication } from '../../types';
-import { Clock, CheckCircle2, FileText, CheckCircle, XCircle, Trash2, Calendar, Briefcase } from 'lucide-react';
+import { Clock, CheckCircle2, FileText, CheckCircle, XCircle, Trash2, Calendar, Briefcase, UserCheck } from 'lucide-react';
 
 interface AdvisorLeaveRequestsViewProps {
   onSelectLeaveRequest: (leave: LeaveApplication) => void;
@@ -14,9 +14,10 @@ export const AdvisorLeaveRequestsView: React.FC<AdvisorLeaveRequestsViewProps> =
   onSelectLeaveRequest,
   defaultFilter = 'PENDING'
 }) => {
-  const { currentAdvisor, leaveApplications, advisorReviewLeave, tutorReviewLeave, deleteLeaveApplication, updateLeaveInformedStatus } = useApp();
+  const { currentAdvisor, leaveApplications, advisors, students, advisorReviewLeave, tutorReviewLeave, deleteLeaveApplication, updateLeaveInformedStatus } = useApp();
   const [activeFilter, setActiveFilter] = useState(defaultFilter);
   const [selectedSem, setSelectedSem] = useState<string>('ALL');
+  const [selectedDate, setSelectedDate] = useState<string>('');
 
   const allLeaveRequests = leaveApplications?.filter(
     (l) => l.advisor_id === currentAdvisor?.id || l.tutor_id === currentAdvisor?.id
@@ -29,12 +30,36 @@ export const AdvisorLeaveRequestsView: React.FC<AdvisorLeaveRequestsViewProps> =
     return l.advisor_status;
   };
 
+  const getTutorName = (l: LeaveApplication) => {
+    if (l.tutor_name) return l.tutor_name;
+    if (l.tutor_id) {
+      const tut = advisors.find(a => a.id === l.tutor_id);
+      if (tut) return tut.name;
+    }
+    const student = students.find(s => s.id === l.student_id);
+    if (student?.tutor_id) {
+      const tut = advisors.find(a => a.id === student.tutor_id);
+      if (tut) return tut.name;
+    }
+    return null;
+  };
+
   const displayedLeaves = allLeaveRequests.filter(l => {
     const relevantStatus = getRelevantStatus(l);
     if (activeFilter !== 'ALL' && relevantStatus !== activeFilter) return false;
     if (selectedSem !== 'ALL' && l.semester !== selectedSem) return false;
-    // If user is advisor, they should only see requests that have been approved by the tutor (if a tutor exists)
-    if (l.advisor_id === currentAdvisor?.id && l.tutor_id && l.tutor_status !== 'APPROVED') return false;
+    
+    // Date wise filter
+    if (selectedDate) {
+      if (l.on_date) {
+        if (l.on_date !== selectedDate) return false;
+      } else if (l.from_date && l.to_date) {
+        if (selectedDate < l.from_date || selectedDate > l.to_date) return false;
+      } else {
+        if (!l.created_at?.startsWith(selectedDate)) return false;
+      }
+    }
+
     return true;
   });
 
@@ -70,9 +95,10 @@ export const AdvisorLeaveRequestsView: React.FC<AdvisorLeaveRequestsViewProps> =
           </div>
         </div>
 
-        {/* Global Filters: Semester (Inline with Header logic) */}
+        {/* Global Filters: Semester & Date Filter */}
         <div className="flex flex-col sm:flex-row gap-3 bg-white p-3 rounded-2xl border border-slate-200">
           <div className="flex-1">
+            <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Filter by Semester</label>
             <select
               value={selectedSem}
               onChange={(e) => setSelectedSem(e.target.value)}
@@ -89,6 +115,27 @@ export const AdvisorLeaveRequestsView: React.FC<AdvisorLeaveRequestsViewProps> =
               <option value="Semester 8">Semester 8</option>
             </select>
           </div>
+
+          <div className="flex-1 flex flex-col justify-end">
+            <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Filter by Leave Date</label>
+            <div className="flex items-center gap-2">
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50/50 text-xs text-slate-700 font-medium focus:outline-none cursor-pointer"
+                title="Filter by Leave Date"
+              />
+              {selectedDate && (
+                <button
+                  onClick={() => setSelectedDate('')}
+                  className="px-3 py-2 text-xs font-bold text-slate-500 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors shrink-0"
+                >
+                  Clear Date
+                </button>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Status Filters */}
@@ -96,7 +143,16 @@ export const AdvisorLeaveRequestsView: React.FC<AdvisorLeaveRequestsViewProps> =
           {['ALL', 'PENDING', 'APPROVED', 'REJECTED'].map(tab => {
             const count = allLeaveRequests.filter(l => {
               const relevantStatus = getRelevantStatus(l);
-              if (l.advisor_id === currentAdvisor?.id && l.tutor_id && l.tutor_status !== 'APPROVED') return false;
+              if (selectedSem !== 'ALL' && l.semester !== selectedSem) return false;
+              if (selectedDate) {
+                if (l.on_date) {
+                  if (l.on_date !== selectedDate) return false;
+                } else if (l.from_date && l.to_date) {
+                  if (selectedDate < l.from_date || selectedDate > l.to_date) return false;
+                } else {
+                  if (!l.created_at?.startsWith(selectedDate)) return false;
+                }
+              }
               return tab === 'ALL' || relevantStatus === tab;
             }).length;
             return (
@@ -129,108 +185,129 @@ export const AdvisorLeaveRequestsView: React.FC<AdvisorLeaveRequestsViewProps> =
             </p>
           </div>
         ) : (
-          displayedLeaves.map((l) => (
-            <div 
-              key={l.id}
-              onClick={() => onSelectLeaveRequest(l)}
-              className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-xs flex flex-col gap-4 cursor-pointer hover:border-teal-300 transition-colors"
-            >
-              <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
-                
-                {/* Left: Student Info */}
-                <div className="flex items-start gap-4 flex-1">
-                  <div className="w-10 h-10 rounded-full bg-teal-100 text-teal-700 font-bold flex items-center justify-center shrink-0">
-                    {l.student_name.charAt(0)}
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-extrabold text-slate-900">{l.student_name}</h3>
-                    <p className="text-[11px] font-semibold text-slate-500 flex items-center gap-1.5 mt-0.5">
-                      <span className="bg-slate-100 px-1.5 py-0.5 rounded-md">{l.student_roll}</span>
-                      <span>&bull;</span>
-                      <span>{l.semester}</span>
-                    </p>
-                  </div>
-                </div>
-
-                {/* Right: Status & Actions */}
-                <div className="flex flex-col items-end gap-2 shrink-0 self-end sm:self-auto w-full sm:w-auto">
-                  <div className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold flex items-center gap-1.5 ${
-                    getRelevantStatus(l) === 'APPROVED' ? 'bg-emerald-100 text-emerald-700' :
-                    getRelevantStatus(l) === 'REJECTED' ? 'bg-red-100 text-red-700' :
-                    'bg-amber-100 text-amber-700'
-                  }`}>
-                    {getStatusIcon(getRelevantStatus(l))}
-                    <span>{getRelevantStatus(l)}</span>
-                  </div>
-                </div>
-              </div>
-
-
-
-              {/* Action Buttons */}
-              <div className="flex items-center justify-between pt-2 mt-2 border-t border-slate-100">
-                <label className="flex items-center gap-2 cursor-pointer group" onClick={(e) => e.stopPropagation()}>
-                  <div className="relative flex items-center justify-center">
-                    <input
-                      type="checkbox"
-                      checked={l.is_informed || false}
-                      onChange={(e) => {
-                        updateLeaveInformedStatus(l.id, e.target.checked);
-                      }}
-                      className="peer sr-only"
-                    />
-                    <div className={`w-4 h-4 border rounded transition-colors ${l.is_informed ? 'bg-teal-500 border-teal-500' : 'bg-white border-slate-300 group-hover:border-teal-400'}`}></div>
-                    {l.is_informed && <CheckCircle2 className="absolute text-white w-3 h-3 pointer-events-none" />}
-                  </div>
-                  <span className="text-xs font-semibold text-slate-700 select-none">Informed</span>
-                </label>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={(e) => handleDeleteLeave(e, l.id)}
-                    className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors"
-                    title="Delete Application"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+          displayedLeaves.map((l) => {
+            const tutorName = getTutorName(l);
+            return (
+              <div 
+                key={l.id}
+                onClick={() => onSelectLeaveRequest(l)}
+                className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-xs flex flex-col gap-4 cursor-pointer hover:border-teal-300 transition-colors"
+              >
+                <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
                   
-                  {getRelevantStatus(l) === 'PENDING' && (
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={(e) => { 
-                          e.stopPropagation(); 
-                          if (l.tutor_id === currentAdvisor?.id) {
-                            tutorReviewLeave(l.id, 'REJECTED');
-                          } else {
-                            advisorReviewLeave(l.id, 'REJECTED'); 
-                          }
-                        }}
-                        className="px-4 py-2 rounded-xl text-xs font-bold text-red-700 bg-red-50 hover:bg-red-100 transition-colors"
-                      >
-                        Reject
-                      </button>
-                      <button
-                        onClick={(e) => { 
-                          e.stopPropagation(); 
-                          if (l.tutor_id === currentAdvisor?.id) {
-                            tutorReviewLeave(l.id, 'APPROVED');
-                          } else {
-                            advisorReviewLeave(l.id, 'APPROVED'); 
-                          }
-                        }}
-                        disabled={!l.is_informed}
-                        title={!l.is_informed ? "Please mark as informed first" : ""}
-                        className="px-4 py-2 rounded-xl text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors flex items-center gap-1 disabled:opacity-50"
-                      >
-                        <CheckCircle2 className="w-4 h-4" />
-                        Approve
-                      </button>
+                  {/* Left: Student Info & Tutor Name */}
+                  <div className="flex items-start gap-4 flex-1">
+                    <div className="w-10 h-10 rounded-full bg-teal-100 text-teal-700 font-bold flex items-center justify-center shrink-0">
+                      {l.student_name.charAt(0)}
                     </div>
-                  )}
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="text-sm font-extrabold text-slate-900">{l.student_name}</h3>
+                        {tutorName && (
+                          <span className="inline-flex items-center gap-1 bg-indigo-50 text-indigo-700 border border-indigo-100 px-2 py-0.5 rounded-md text-[10px] font-bold">
+                            <UserCheck className="w-3 h-3" />
+                            Tutor: {tutorName}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[11px] font-semibold text-slate-500 flex items-center gap-1.5">
+                        <span className="bg-slate-100 px-1.5 py-0.5 rounded-md">{l.student_roll}</span>
+                        <span>&bull;</span>
+                        <span>{l.semester}</span>
+                        <span>&bull;</span>
+                        <span className="font-bold text-teal-700">{l.leave_type} Leave</span>
+                      </p>
+                      <p className="text-xs font-semibold text-slate-700 flex items-center gap-1 mt-1">
+                        <Calendar className="w-3.5 h-3.5 text-teal-600" />
+                        <span>Date: {l.from_date ? `${l.from_date} to ${l.to_date}` : l.on_date}</span>
+                        <span className="text-slate-400">({l.no_of_days} Day{l.no_of_days > 1 ? 's' : ''})</span>
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Right: Status */}
+                  <div className="flex flex-col items-end gap-2 shrink-0 self-end sm:self-auto w-full sm:w-auto">
+                    <div className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold flex items-center gap-1.5 ${
+                      getRelevantStatus(l) === 'APPROVED' ? 'bg-emerald-100 text-emerald-700' :
+                      getRelevantStatus(l) === 'REJECTED' ? 'bg-red-100 text-red-700' :
+                      'bg-amber-100 text-amber-700'
+                    }`}>
+                      {getStatusIcon(getRelevantStatus(l))}
+                      <span>{getRelevantStatus(l)}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Purpose Preview */}
+                <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 text-xs text-slate-600 font-medium line-clamp-2">
+                  <span className="font-bold text-slate-800">Purpose: </span>{l.purpose}
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex items-center justify-between pt-2 mt-2 border-t border-slate-100">
+                  <label className="flex items-center gap-2 cursor-pointer group" onClick={(e) => e.stopPropagation()}>
+                    <div className="relative flex items-center justify-center">
+                      <input
+                        type="checkbox"
+                        checked={l.is_informed || false}
+                        onChange={(e) => {
+                          updateLeaveInformedStatus(l.id, e.target.checked);
+                        }}
+                        className="peer sr-only"
+                      />
+                      <div className={`w-4 h-4 border rounded transition-colors ${l.is_informed ? 'bg-teal-500 border-teal-500' : 'bg-white border-slate-300 group-hover:border-teal-400'}`}></div>
+                      {l.is_informed && <CheckCircle2 className="absolute text-white w-3 h-3 pointer-events-none" />}
+                    </div>
+                    <span className="text-xs font-semibold text-slate-700 select-none">Informed</span>
+                  </label>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={(e) => handleDeleteLeave(e, l.id)}
+                      className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors"
+                      title="Delete Application"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                    
+                    {getRelevantStatus(l) === 'PENDING' && (
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={(e) => { 
+                            e.stopPropagation(); 
+                            if (l.tutor_id === currentAdvisor?.id) {
+                              tutorReviewLeave(l.id, 'REJECTED');
+                            } else {
+                              advisorReviewLeave(l.id, 'REJECTED'); 
+                            }
+                          }}
+                          className="px-4 py-2 rounded-xl text-xs font-bold text-red-700 bg-red-50 hover:bg-red-100 transition-colors"
+                        >
+                          Reject
+                        </button>
+                        <button
+                          onClick={(e) => { 
+                            e.stopPropagation(); 
+                            if (l.tutor_id === currentAdvisor?.id) {
+                              tutorReviewLeave(l.id, 'APPROVED');
+                            } else {
+                              advisorReviewLeave(l.id, 'APPROVED'); 
+                            }
+                          }}
+                          disabled={!l.is_informed}
+                          title={!l.is_informed ? "Please mark as informed first" : ""}
+                          className="px-4 py-2 rounded-xl text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors flex items-center gap-1 disabled:opacity-50"
+                        >
+                          <CheckCircle2 className="w-4 h-4" />
+                          Approve
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
 
