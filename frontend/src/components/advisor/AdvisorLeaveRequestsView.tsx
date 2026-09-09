@@ -33,13 +33,28 @@ export const AdvisorLeaveRequestsView: React.FC<AdvisorLeaveRequestsViewProps> =
   const getTutorName = (l: LeaveApplication) => {
     if (l.tutor_name) return l.tutor_name;
     if (l.tutor_id) {
-      const tut = advisors.find(a => a.id === l.tutor_id);
+      const tut = advisors?.find(a => a.id === l.tutor_id);
       if (tut) return tut.name;
     }
-    const student = students.find(s => s.id === l.student_id);
+    const student = students?.find(s => s.id === l.student_id);
     if (student?.tutor_id) {
-      const tut = advisors.find(a => a.id === student.tutor_id);
+      const tut = advisors?.find(a => a.id === student.tutor_id);
       if (tut) return tut.name;
+    }
+
+    // Roll number fallback allocation
+    const roll = (l.student_roll || student?.roll_no || '').trim().toUpperCase();
+    if (roll) {
+      if (/^24CS0(7[1-9]|8[0-9]|9[0-4])$/.test(roll)) {
+        const tut = advisors?.find(a => a.name.toLowerCase().includes('kirubakaran') || a.email.includes('kirubakaran'));
+        if (tut) return tut.name;
+        return 'Kirubakaran K';
+      }
+      if (/^24CS0(9[5-9])|24CS1(0[1-9]|1[0-9]|20)$/.test(roll)) {
+        const tut = advisors?.find(a => a.name.toLowerCase().includes('geetha') || a.email.includes('geetha'));
+        if (tut) return tut.name;
+        return 'Geetha N';
+      }
     }
     return null;
   };

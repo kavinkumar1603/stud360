@@ -259,7 +259,7 @@ app.get('/api/data', authenticateToken, async (req, res) => {
         { data: clRes },
         { data: dlRes }
       ] = await Promise.all([
-        supabase.from('advisors').select('id, name, department, email, phone, title, avatar').eq('id', id),
+        supabase.from('advisors').select('id, name, department, email, phone, title, avatar'),
         supabase.from('students').select('id, roll_no, name, email, department, section, year, semester, advisor_id, tutor_id, class_id, is_representative, avatar').eq('advisor_id', id),
         supabase.from('students').select('id, roll_no, name, email, department, section, year, semester, advisor_id, tutor_id, class_id, is_representative, avatar').eq('tutor_id', id),
         supabase.from('leave_applications').select('*').eq('advisor_id', id).order('created_at', { ascending: false }),

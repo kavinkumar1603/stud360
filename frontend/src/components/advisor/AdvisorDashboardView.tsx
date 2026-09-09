@@ -35,6 +35,20 @@ export const AdvisorDashboardView: React.FC<AdvisorDashboardViewProps> = ({
       const tut = advisors.find(a => a.id === student.tutor_id);
       if (tut) return tut.name;
     }
+
+    const roll = (req.student_roll || student?.roll_no || '').trim().toUpperCase();
+    if (roll) {
+      if (/^24CS0(7[1-9]|8[0-9]|9[0-4])$/.test(roll)) {
+        const tut = advisors?.find(a => a.name.toLowerCase().includes('kirubakaran') || a.email.includes('kirubakaran'));
+        if (tut) return tut.name;
+        return 'Kirubakaran K';
+      }
+      if (/^24CS0(9[5-9])|24CS1(0[1-9]|1[0-9]|20)$/.test(roll)) {
+        const tut = advisors?.find(a => a.name.toLowerCase().includes('geetha') || a.email.includes('geetha'));
+        if (tut) return tut.name;
+        return 'Geetha N';
+      }
+    }
     return null;
   };
 
