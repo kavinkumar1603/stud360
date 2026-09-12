@@ -179,29 +179,23 @@ app.get('/api/data', authenticateToken, async (req, res) => {
       const { data: studentRes } = await supabase.from('students').select('id, roll_no, name, email, phone, department, section, year, semester, advisor_id, tutor_id, class_id, is_representative, avatar').eq('id', id).single();
       const currentStudent = studentRes;
       
-      let otherStudents = [];
+      // Fetch minimal directory data (id, roll_no, name, department, section, year, class_id) for all other students
+      // so any student can search and add team members for Team OD requests without exposing private data (email, phone, etc.)
+      const { data: allStudentsRes } = await supabase
+        .from('students')
+        .select('id, roll_no, name, department, section, year, class_id, is_representative')
+        .order('roll_no', { ascending: true });
+
+      const otherStudents = (allStudentsRes || []).filter(s => s.id !== id);
       
-      // ONLY fetch other students if the current student is a representative
-      if (currentStudent && currentStudent.is_representative) {
-        let studentsQuery = supabase.from('students').select('id, roll_no, name, class_id');
-        // Limit to their class (or department) so they can monitor their own class's leaves
-        if (currentStudent.class_id) {
-          studentsQuery = studentsQuery.eq('class_id', currentStudent.class_id);
-        } else if (currentStudent.department) {
-          studentsQuery = studentsQuery.eq('department', currentStudent.department);
-        }
-        const { data: allStudentsRes } = await studentsQuery;
-        otherStudents = (allStudentsRes || []).filter(s => s.id !== id);
-      }
-      
-      // Combine them: current student gets full data. 
-      // Regular students get NO other students. Representatives get bare minimal data for their class.
-      studentsData = currentStudent ? [currentStudent, ...otherStudents] : [];
+      // Current student gets their full profile; directory students only contain public directory fields
+      studentsData = currentStudent ? [currentStudent, ...otherStudents] : (allStudentsRes || []);
       
       let leavesQuery = supabase.from('leave_applications').select('*').order('created_at', { ascending: false });
       if (currentStudent && currentStudent.is_representative) {
-        // Representative gets to see leaves for students in their department
-        const validStudentIds = studentsData.map(s => s.id);
+        // Representative gets to see leaves for students in their own class / department
+        const sameClassStudents = studentsData.filter(s => currentStudent.class_id ? s.class_id === currentStudent.class_id : (s.department === currentStudent.department));
+        const validStudentIds = sameClassStudents.map(s => s.id);
         if (validStudentIds.length > 0) {
             leavesQuery = leavesQuery.in('student_id', validStudentIds);
         } else {
@@ -369,16 +363,12 @@ app.delete('/api/od-requests/:id', authenticateToken, async (req, res) => {
 
   app.post('/api/leave-applications', authenticateToken, async (req, res) => {
     try {
-      console.log('Received leave application:', req.body);
       const { data: inserted, error } = await supabase.from('leave_applications').insert(req.body).select().single();
       if (error) {
-        console.error('Error inserting leave:', error);
         throw error;
       }
-      console.log('Inserted leave application:', inserted);
       res.json(inserted);
     } catch (error) {
-      console.error('Catch block error in POST /api/leave-applications:', error.message);
       res.status(500).json({ error: error.message });
     }
   });
