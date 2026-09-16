@@ -96,10 +96,10 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({
 
   const pendingLeaveCount = (leaveApplications || []).filter(
     (l) => {
+      if (l.tutor_status === 'APPROVED' || l.advisor_status === 'APPROVED') return false;
       if (l.tutor_id === currentAdvisor.id && l.tutor_status === 'PENDING') return true;
-      if (l.advisor_id === currentAdvisor.id && l.advisor_status === 'PENDING') {
-        if (!l.tutor_id || l.tutor_status === 'APPROVED') return true;
-      }
+      if (isBatchStudent(l.student_id, l.student_roll) && l.tutor_status === 'PENDING') return true;
+      if (l.advisor_id === currentAdvisor.id && l.advisor_status === 'PENDING') return true;
       return false;
     }
   ).length;

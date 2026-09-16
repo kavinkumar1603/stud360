@@ -498,15 +498,45 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const addLeaveApplication = async (data: { leave_type: LeaveType; scholar_type: ScholarType; semester: Semester; from_date?: string; to_date?: string; on_date?: string; no_of_days: number; purpose: string }) => {
     if (!currentStudent?.id) return;
     
-    const tutorObj = advisors.find((a) => a.id === currentStudent.tutor_id);
+    // Resolve tutor and advisor
+    const roll = (currentStudent.roll_no || '').trim().toUpperCase();
+    let tutorId = currentStudent.tutor_id || null;
+    let tutorName = '';
+    let advisorId = currentStudent.advisor_id || null;
+
+    if (!tutorId && roll) {
+      if (/^24CS0(7[1-9]|8[0-9]|9[0-4])$/.test(roll)) {
+        const tut = advisors.find(a => a.name.toLowerCase().includes('kirubakaran') || a.email?.includes('kirubakaran'));
+        if (tut) {
+          tutorId = tut.id;
+          tutorName = tut.name;
+        }
+      } else if (/^24CS0(9[5-9])|24CS1(0[1-9]|1[0-9]|20)$/.test(roll)) {
+        const tut = advisors.find(a => a.name.toLowerCase().includes('geetha') || a.email?.includes('geetha'));
+        if (tut) {
+          tutorId = tut.id;
+          tutorName = tut.name;
+        }
+      }
+    }
+
+    if (!tutorName && tutorId) {
+      const tut = advisors.find(a => a.id === tutorId);
+      if (tut) tutorName = tut.name;
+    }
+
+    if (!advisorId) {
+      const adv = advisors.find(a => a.title === 'advisor' || a.name.toLowerCase().includes('anandaraj') || a.email?.includes('anandaraj'));
+      if (adv) advisorId = adv.id;
+    }
     
     const newLeave = {
       student_id: currentStudent.id,
       student_name: currentStudent.name,
       student_roll: currentStudent.roll_no,
-      advisor_id: currentStudent.advisor_id,
-      tutor_id: currentStudent.tutor_id || null,
-      tutor_name: tutorObj ? tutorObj.name : null,
+      advisor_id: advisorId,
+      tutor_id: tutorId,
+      tutor_name: tutorName || null,
       ...data,
       tutor_status: 'PENDING',
       advisor_status: 'PENDING'
@@ -535,7 +565,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
       
       setLeaveApplications(prev => [inserted, ...prev]);
-      addToast('Leave application sent to your advisor', 'success');
+      addToast('Leave application sent to advisor & tutor', 'success');
     } catch (error) {
       addToast('Error saving leave application', 'error');
       console.error('An error occurred');

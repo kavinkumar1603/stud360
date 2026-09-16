@@ -44,9 +44,10 @@ export const LeaveApplicationsListView: React.FC<LeaveApplicationsListViewProps>
   };
 
   const getFinalStatus = (l: LeaveApplication) => {
-      if (l.tutor_id && l.tutor_status === 'REJECTED') return 'REJECTED';
-      if (l.tutor_id && l.tutor_status === 'PENDING') return 'PENDING';
-      return l.advisor_status;
+    if (l.tutor_status === 'APPROVED' || l.advisor_status === 'APPROVED') return 'APPROVED';
+    if (l.tutor_status === 'REJECTED' && l.advisor_status === 'REJECTED') return 'REJECTED';
+    if (l.tutor_status === 'REJECTED' || l.advisor_status === 'REJECTED') return 'REJECTED';
+    return 'PENDING';
   };
 
   const filteredLeaves = myLeaves.filter((l) => {
@@ -61,15 +62,15 @@ export const LeaveApplicationsListView: React.FC<LeaveApplicationsListViewProps>
   });
 
   const getDisplayStatus = (l: LeaveApplication) => {
-    if (l.tutor_id) {
-      if (l.tutor_status === 'REJECTED') return 'REJECTED (Tutor)';
-      if (l.tutor_status === 'PENDING') return 'PENDING (Tutor)';
-      if (l.tutor_status === 'APPROVED') {
-         if (l.advisor_status === 'PENDING') return 'PENDING (Advisor)';
-         if (l.advisor_status === 'REJECTED') return 'REJECTED (Advisor)';
-      }
+    if (l.tutor_status === 'APPROVED' || l.advisor_status === 'APPROVED') {
+      return 'APPROVED';
     }
-    return l.advisor_status;
+    if (l.tutor_status === 'REJECTED' && l.advisor_status === 'REJECTED') {
+      return 'REJECTED';
+    }
+    if (l.tutor_status === 'REJECTED') return 'REJECTED (Tutor)';
+    if (l.advisor_status === 'REJECTED') return 'REJECTED (Advisor)';
+    return 'PENDING';
   };
 
   return (

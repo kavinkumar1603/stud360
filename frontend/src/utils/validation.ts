@@ -41,3 +41,22 @@ export function formatDateRange(fromStr: string, toStr: string): string {
   }
   return `${formatDate(fromStr)} - ${formatDate(toStr)}`;
 }
+
+/**
+ * Determines overall Leave status based on tutor and advisor decisions:
+ * If either one accepts, status is APPROVED.
+ * If both reject (or one rejects with neither approving), status is REJECTED.
+ * Otherwise PENDING.
+ */
+export function getLeaveStatus(l: { tutor_status?: string | null; advisor_status?: string | null }): 'APPROVED' | 'REJECTED' | 'PENDING' {
+  if (l.tutor_status === 'APPROVED' || l.advisor_status === 'APPROVED') {
+    return 'APPROVED';
+  }
+  if (l.tutor_status === 'REJECTED' && l.advisor_status === 'REJECTED') {
+    return 'REJECTED';
+  }
+  if (l.tutor_status === 'REJECTED' || l.advisor_status === 'REJECTED') {
+    return 'REJECTED';
+  }
+  return 'PENDING';
+}

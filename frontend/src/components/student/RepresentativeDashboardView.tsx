@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { Users, FileText, CheckCircle, Clock } from 'lucide-react';
+import { getLeaveStatus } from '../../utils/validation';
 
 export const RepresentativeDashboardView: React.FC = () => {
   const { currentStudent, students, leaveApplications } = useApp();
@@ -12,7 +13,7 @@ export const RepresentativeDashboardView: React.FC = () => {
   const sameClassStudents = students.filter(s => s.class_id === currentStudent.class_id);
   const validStudentIds = new Set(sameClassStudents.map(s => s.id));
   const classLeaves = leaveApplications.filter(l => validStudentIds.has(l.student_id));
-  const filteredLeaves = classLeaves.filter(l => filter === 'ALL' || l.advisor_status === filter);
+  const filteredLeaves = classLeaves.filter(l => filter === 'ALL' || getLeaveStatus(l) === filter);
 
   // Stats should reflect their class
   const totalStudents = sameClassStudents.length;
@@ -20,7 +21,7 @@ export const RepresentativeDashboardView: React.FC = () => {
   // Calculate how many students are on leave today (approved leaves only)
   const today = new Date().toISOString().split('T')[0];
   const todaysLeaves = classLeaves.filter(l => {
-    if (l.advisor_status !== 'APPROVED') return false;
+    if (getLeaveStatus(l) !== 'APPROVED') return false;
     if (l.no_of_days === 1) {
       return l.on_date === today;
     } else {
@@ -29,8 +30,8 @@ export const RepresentativeDashboardView: React.FC = () => {
   }).length;
 
   const totalLeaves = classLeaves.length;
-  const approvedLeaves = classLeaves.filter(l => l.advisor_status === 'APPROVED').length;
-  const pendingLeaves = classLeaves.filter(l => l.advisor_status === 'PENDING').length;
+  const approvedLeaves = classLeaves.filter(l => getLeaveStatus(l) === 'APPROVED').length;
+  const pendingLeaves = classLeaves.filter(l => getLeaveStatus(l) === 'PENDING').length;
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto pb-24">
@@ -125,15 +126,17 @@ export const RepresentativeDashboardView: React.FC = () => {
                   isToday = leave.from_date <= today && leave.to_date >= today;
                 }
 
+                const leaveStatus = getLeaveStatus(leave);
+
                 return (
-                  <tr key={leave.id} className={`transition-colors ${isToday && leave.advisor_status === 'APPROVED' ? 'bg-purple-50/50 hover:bg-purple-50' : 'hover:bg-slate-50'}`}>
+                  <tr key={leave.id} className={`transition-colors ${isToday && leaveStatus === 'APPROVED' ? 'bg-purple-50/50 hover:bg-purple-50' : 'hover:bg-slate-50'}`}>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
                         <div>
                           <p className="font-bold text-slate-900">{leave.student_name}</p>
                           <p className="text-[11px] font-semibold text-slate-500">{leave.student_roll}</p>
                         </div>
-                        {isToday && leave.advisor_status === 'APPROVED' && (
+                        {isToday && leaveStatus === 'APPROVED' && (
                           <span className="ml-2 px-2 py-0.5 rounded text-[9px] font-bold bg-purple-100 text-purple-700 uppercase tracking-wider">
                             Absent Today
                           </span>
@@ -153,11 +156,11 @@ export const RepresentativeDashboardView: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 text-right">
                       <span className={`px-2.5 py-1 rounded-full text-[10px] font-black tracking-wider uppercase border ${
-                        leave.advisor_status === 'APPROVED' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                        leave.advisor_status === 'REJECTED' ? 'bg-red-50 text-red-700 border-red-200' :
+                        leaveStatus === 'APPROVED' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                        leaveStatus === 'REJECTED' ? 'bg-red-50 text-red-700 border-red-200' :
                         'bg-amber-50 text-amber-700 border-amber-200'
                       }`}>
-                        {leave.advisor_status}
+                        {leaveStatus}
                       </span>
                     </td>
                   </tr>

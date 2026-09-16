@@ -26,8 +26,33 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({ isOpen, onClos
 
   if (!isOpen) return null;
 
-  const assignedTutor = advisors?.find((a) => a.id === currentStudent?.tutor_id);
-  const assignedAdvisor = advisors?.find((a) => a.id === currentStudent?.advisor_id);
+  const getAssignedTutor = () => {
+    if (currentStudent?.tutor_id) {
+      const tut = advisors?.find((a) => a.id === currentStudent.tutor_id);
+      if (tut) return tut;
+    }
+    const roll = (currentStudent?.roll_no || '').trim().toUpperCase();
+    if (roll) {
+      if (/^24CS0(7[1-9]|8[0-9]|9[0-4])$/.test(roll)) {
+        return advisors?.find(a => a.name.toLowerCase().includes('kirubakaran') || a.email?.includes('kirubakaran')) || { name: 'Kirubakaran K' };
+      }
+      if (/^24CS0(9[5-9])|24CS1(0[1-9]|1[0-9]|20)$/.test(roll)) {
+        return advisors?.find(a => a.name.toLowerCase().includes('geetha') || a.email?.includes('geetha')) || { name: 'Geetha N' };
+      }
+    }
+    return null;
+  };
+
+  const getAssignedAdvisor = () => {
+    if (currentStudent?.advisor_id) {
+      const adv = advisors?.find((a) => a.id === currentStudent.advisor_id);
+      if (adv) return adv;
+    }
+    return advisors?.find(a => a.title === 'advisor' || a.name.toLowerCase().includes('anandaraj') || a.email?.includes('anandaraj')) || { name: 'Anandaraj A' };
+  };
+
+  const assignedTutor = getAssignedTutor();
+  const assignedAdvisor = getAssignedAdvisor();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

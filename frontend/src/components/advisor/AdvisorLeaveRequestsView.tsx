@@ -19,15 +19,34 @@ export const AdvisorLeaveRequestsView: React.FC<AdvisorLeaveRequestsViewProps> =
   const [selectedSem, setSelectedSem] = useState<string>('ALL');
   const [selectedDate, setSelectedDate] = useState<string>('');
 
+  const isBatchStudent = (studentId?: string, studentRoll?: string) => {
+    if (!currentAdvisor) return false;
+    if (studentId && students?.some(s => s.id === studentId && (s.tutor_id === currentAdvisor.id || s.advisor_id === currentAdvisor.id))) return true;
+    const s = students?.find(st => st.id === studentId);
+    const roll = (studentRoll || s?.roll_no || '').trim().toUpperCase();
+    if (roll && currentAdvisor.email) {
+      if (currentAdvisor.email.includes('kirubakaran') && /^24CS0(7[1-9]|8[0-9]|9[0-4])$/.test(roll)) return true;
+      if (currentAdvisor.email.includes('geetha') && (/^24CS0(9[5-9])$/.test(roll) || /^24CS1(0[1-9]|1[0-9]|20)$/.test(roll))) return true;
+    }
+    return false;
+  };
+
   const allLeaveRequests = leaveApplications?.filter(
-    (l) => l.advisor_id === currentAdvisor?.id || l.tutor_id === currentAdvisor?.id
+    (l) => l.advisor_id === currentAdvisor?.id || l.tutor_id === currentAdvisor?.id || isBatchStudent(l.student_id, l.student_roll)
   ) || [];
 
   const getRelevantStatus = (l: LeaveApplication) => {
-    if (l.tutor_id === currentAdvisor?.id) {
+    if (l.tutor_status === 'APPROVED' || l.advisor_status === 'APPROVED') {
+      return 'APPROVED';
+    }
+    if (l.tutor_id === currentAdvisor?.id || isBatchStudent(l.student_id, l.student_roll)) {
+      if (l.tutor_status === 'REJECTED') return 'REJECTED';
+      if (l.advisor_status === 'REJECTED') return 'REJECTED';
       return l.tutor_status || 'PENDING';
     }
-    return l.advisor_status;
+    if (l.advisor_status === 'REJECTED') return 'REJECTED';
+    if (l.tutor_status === 'REJECTED') return 'REJECTED';
+    return l.advisor_status || 'PENDING';
   };
 
   const getTutorName = (l: LeaveApplication) => {
@@ -290,7 +309,7 @@ export const AdvisorLeaveRequestsView: React.FC<AdvisorLeaveRequestsViewProps> =
                         <button
                           onClick={(e) => { 
                             e.stopPropagation(); 
-                            if (l.tutor_id === currentAdvisor?.id) {
+                            if (currentAdvisor?.title === 'tutor' || l.tutor_id === currentAdvisor?.id || isBatchStudent(l.student_id, l.student_roll)) {
                               tutorReviewLeave(l.id, 'REJECTED');
                             } else {
                               advisorReviewLeave(l.id, 'REJECTED'); 
@@ -303,7 +322,7 @@ export const AdvisorLeaveRequestsView: React.FC<AdvisorLeaveRequestsViewProps> =
                         <button
                           onClick={(e) => { 
                             e.stopPropagation(); 
-                            if (l.tutor_id === currentAdvisor?.id) {
+                            if (currentAdvisor?.title === 'tutor' || l.tutor_id === currentAdvisor?.id || isBatchStudent(l.student_id, l.student_roll)) {
                               tutorReviewLeave(l.id, 'APPROVED');
                             } else {
                               advisorReviewLeave(l.id, 'APPROVED'); 

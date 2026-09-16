@@ -59,11 +59,30 @@ export const LeaveDetailAdvisorView: React.FC<LeaveDetailAdvisorViewProps> = ({ 
 
   const tutorName = getTutorName();
 
+  const isBatchStudent = (studentId?: string, studentRoll?: string) => {
+    if (!currentAdvisor) return false;
+    if (studentId && students?.some(s => s.id === studentId && (s.tutor_id === currentAdvisor.id || s.advisor_id === currentAdvisor.id))) return true;
+    const s = students?.find(st => st.id === studentId);
+    const roll = (studentRoll || s?.roll_no || '').trim().toUpperCase();
+    if (roll && currentAdvisor.email) {
+      if (currentAdvisor.email.includes('kirubakaran') && /^24CS0(7[1-9]|8[0-9]|9[0-4])$/.test(roll)) return true;
+      if (currentAdvisor.email.includes('geetha') && (/^24CS0(9[5-9])$/.test(roll) || /^24CS1(0[1-9]|1[0-9]|20)$/.test(roll))) return true;
+    }
+    return false;
+  };
+
   const getRelevantStatus = (l: LeaveApplication) => {
-    if (l.tutor_id === currentAdvisor?.id) {
+    if (l.tutor_status === 'APPROVED' || l.advisor_status === 'APPROVED') {
+      return 'APPROVED';
+    }
+    if (currentAdvisor?.title === 'tutor' || l.tutor_id === currentAdvisor?.id || isBatchStudent(l.student_id, l.student_roll)) {
+      if (l.tutor_status === 'REJECTED') return 'REJECTED';
+      if (l.advisor_status === 'REJECTED') return 'REJECTED';
       return l.tutor_status || 'PENDING';
     }
-    return l.advisor_status;
+    if (l.advisor_status === 'REJECTED') return 'REJECTED';
+    if (l.tutor_status === 'REJECTED') return 'REJECTED';
+    return l.advisor_status || 'PENDING';
   };
 
   const relevantStatus = getRelevantStatus(currentLeave);
@@ -79,7 +98,7 @@ export const LeaveDetailAdvisorView: React.FC<LeaveDetailAdvisorViewProps> = ({ 
 
   const handleApprove = async () => {
     setIsActionPending(true);
-    if (currentLeave.tutor_id === currentAdvisor?.id) {
+    if (currentAdvisor?.title === 'tutor' || currentLeave.tutor_id === currentAdvisor?.id || isBatchStudent(currentLeave.student_id, currentLeave.student_roll)) {
       await tutorReviewLeave(currentLeave.id, 'APPROVED');
     } else {
       await advisorReviewLeave(currentLeave.id, 'APPROVED');
@@ -89,7 +108,7 @@ export const LeaveDetailAdvisorView: React.FC<LeaveDetailAdvisorViewProps> = ({ 
 
   const handleReject = async () => {
     setIsActionPending(true);
-    if (currentLeave.tutor_id === currentAdvisor?.id) {
+    if (currentAdvisor?.title === 'tutor' || currentLeave.tutor_id === currentAdvisor?.id || isBatchStudent(currentLeave.student_id, currentLeave.student_roll)) {
       await tutorReviewLeave(currentLeave.id, 'REJECTED');
     } else {
       await advisorReviewLeave(currentLeave.id, 'REJECTED');

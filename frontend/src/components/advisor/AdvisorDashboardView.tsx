@@ -81,7 +81,10 @@ export const AdvisorDashboardView: React.FC<AdvisorDashboardViewProps> = ({
 
   // LEAVES METRICS
   const cohortLeaves = (leaveApplications || []).filter(l => l.advisor_id === currentAdvisor?.id || l.tutor_id === currentAdvisor?.id || myStudentIds.includes(l.student_id));
-  const pendingLeaves = cohortLeaves.filter(l => isTutor ? l.tutor_status === 'PENDING' : l.advisor_status === 'PENDING');
+  const pendingLeaves = cohortLeaves.filter(l => {
+    if (l.tutor_status === 'APPROVED' || l.advisor_status === 'APPROVED') return false;
+    return isTutor ? l.tutor_status === 'PENDING' : l.advisor_status === 'PENDING';
+  });
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto pb-24">
@@ -333,7 +336,11 @@ export const AdvisorDashboardView: React.FC<AdvisorDashboardViewProps> = ({
           ) : (
             (isTutor ? cohortLeaves : cohortODs).slice(0, 5).map(req => {
               const student = students.find(s => s.id === req.student_id);
-              const status = isTutor ? (req as LeaveApplication).tutor_status : (req as ODRequest).advisor_status;
+              const status = isTutor || 'leave_type' in req 
+                ? (((req as LeaveApplication).tutor_status === 'APPROVED' || (req as LeaveApplication).advisor_status === 'APPROVED') 
+                    ? 'APPROVED' 
+                    : (isTutor ? (req as LeaveApplication).tutor_status : (req as LeaveApplication).advisor_status))
+                : (req as ODRequest).advisor_status;
               return (
                 <div 
                   key={req.id} 
