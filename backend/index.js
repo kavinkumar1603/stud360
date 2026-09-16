@@ -299,24 +299,8 @@ app.get('/api/data', authenticateToken, async (req, res) => {
       const { data: allOdRes } = await supabase.from('od_requests').select('*').order('created_at', { ascending: false });
       const allODs = allOdRes || [];
 
-      if (isTutor) {
-        // Tutors only see batch members' OD requests after advisor approval
-        odData = allODs.filter(od => {
-          if (od.advisor_status !== 'APPROVED') return false;
-          const isPrimaryBatch = studentIds.includes(od.student_id) || isTutorBatchRoll(od.student_roll);
-          const isTeamBatch = Array.isArray(od.team_members) && od.team_members.some(m => 
-            studentIds.includes(m.student_id) || isTutorBatchRoll(m.roll_no)
-          );
-          return isPrimaryBatch || isTeamBatch;
-        });
-      } else {
-        // Faculty Advisors see all OD requests for their cohort
-        odData = allODs.filter(od => 
-          od.advisor_id === id || 
-          studentIds.includes(od.student_id) || 
-          (Array.isArray(od.team_members) && od.team_members.some(m => studentIds.includes(m.student_id)))
-        );
-      }
+      // All OD requests are visible to advisors and tutors
+      odData = allODs;
       
       const lMap = new Map();
       (lRes1 || []).forEach(l => lMap.set(l.id, l));

@@ -17,7 +17,7 @@ export const AdvisorODRequestsView: React.FC<AdvisorODRequestsViewProps> = ({
 }) => {
   const { currentAdvisor, odRequests, students, deleteODRequest } = useApp();
   const isTutor = currentAdvisor?.title === 'tutor';
-  const [activeFilter, setActiveFilter] = useState(isTutor ? 'APPROVED' : defaultFilter);
+  const [activeFilter, setActiveFilter] = useState<'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED'>(defaultFilter);
   const [activeType, setActiveType] = useState<'ALL' | 'INDIVIDUAL' | 'TEAM'>('ALL');
   
   // New state for AY and Semester filters
@@ -27,8 +27,8 @@ export const AdvisorODRequestsView: React.FC<AdvisorODRequestsViewProps> = ({
   // Check if a student belongs to the tutor's cohort/batch
   const isBatchStudent = (studentId: string, studentRoll?: string) => {
     if (!currentAdvisor) return false;
-    if (studentId && students.some(s => s.id === studentId && (s.tutor_id === currentAdvisor.id || s.advisor_id === currentAdvisor.id))) return true;
-    const s = students.find(st => st.id === studentId);
+    if (studentId && students?.some(s => s.id === studentId && (s.tutor_id === currentAdvisor.id || s.advisor_id === currentAdvisor.id))) return true;
+    const s = students?.find(st => st.id === studentId);
     const roll = (studentRoll || s?.roll_no || '').trim().toUpperCase();
     if (roll && currentAdvisor.email) {
       if (currentAdvisor.email.includes('kirubakaran') && /^24CS0(7[1-9]|8[0-9]|9[0-4])$/.test(roll)) return true;
@@ -37,30 +37,11 @@ export const AdvisorODRequestsView: React.FC<AdvisorODRequestsViewProps> = ({
     return false;
   };
 
-  const isBatchOD = (od: ODRequest) => {
-    if (isBatchStudent(od.student_id, od.student_roll)) return true;
-    if (Array.isArray(od.team_members) && od.team_members.some(m => isBatchStudent(m.student_id, m.roll_no))) return true;
-    return false;
-  };
-
-  // Get cohort IDs
-  const myStudentIds = students.filter(s => s.advisor_id === currentAdvisor?.id || s.tutor_id === currentAdvisor?.id).map(s => s.id);
-
-  // Filter requests relevant to this advisor/tutor (All time / Till date)
-  const allRequests = odRequests.filter((od) => {
-    if (isTutor) {
-      // Tutors only see batch members' OD requests after advisor approval
-      return isBatchOD(od) && od.advisor_status === 'APPROVED';
-    }
-    return (
-      od.advisor_id === currentAdvisor?.id ||
-      myStudentIds.includes(od.student_id) ||
-      (Array.isArray(od.team_members) && od.team_members.some(m => myStudentIds.includes(m.student_id)))
-    );
-  });
+  // All OD requests are visible to both advisors and tutors
+  const allRequests = odRequests || [];
   
   const displayedRequests = allRequests.filter(od => {
-    if (!isTutor && activeFilter !== 'ALL' && od.advisor_status !== activeFilter) return false;
+    if (activeFilter !== 'ALL' && od.advisor_status !== activeFilter) return false;
     if (activeType === 'INDIVIDUAL' && od.request_type === 'Team') return false;
     if (activeType === 'TEAM' && od.request_type !== 'Team') return false;
     if (selectedAY !== 'ALL' && od.academic_year !== selectedAY) return false;
@@ -92,12 +73,10 @@ export const AdvisorODRequestsView: React.FC<AdvisorODRequestsViewProps> = ({
           <div>
             <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
               <FileText className="w-5 h-5 text-blue-500" />
-              {isTutor ? "Batch Students' Approved ODs" : "OD Applications"}
+              OD Applications
             </h2>
             <p className="text-xs text-slate-500 mt-1 mb-4">
-              {isTutor 
-                ? "View approved On-Duty records for students in your batch"
-                : "Review and manage student OD requests"}
+              Review and track student OD requests
             </p>
             
             <div className="flex bg-slate-100 p-1 rounded-xl w-fit">
@@ -119,28 +98,31 @@ export const AdvisorODRequestsView: React.FC<AdvisorODRequestsViewProps> = ({
 
           <div className="flex flex-col gap-3 shrink-0">
             {/* Status Indicator / Filter */}
-            {isTutor ? (
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 text-xs font-semibold text-slate-600 self-start sm:self-end">
-                <CheckCircle className="w-4 h-4 text-emerald-600" />
-                <span>Showing Approved Records ({displayedRequests.length})</span>
-              </div>
-            ) : (
-              <div className="flex bg-slate-100 p-1 rounded-xl self-start sm:self-end">
-                {['ALL', 'PENDING', 'APPROVED', 'REJECTED'].map((filter) => (
+            <div className="flex bg-slate-100 p-1 rounded-xl self-start sm:self-end">
+              {['ALL', 'PENDING', 'APPROVED', 'REJECTED'].map((filter) => {
+                const count = allRequests.filter(od => {
+                  if (filter !== 'ALL' && od.advisor_status !== filter) return false;
+                  if (activeType === 'INDIVIDUAL' && od.request_type === 'Team') return false;
+                  if (activeType === 'TEAM' && od.request_type !== 'Team') return false;
+                  if (selectedAY !== 'ALL' && od.academic_year !== selectedAY) return false;
+                  if (selectedSem !== 'ALL' && od.semester !== selectedSem) return false;
+                  return true;
+                }).length;
+                return (
                   <button
                     key={filter}
                     onClick={() => setActiveFilter(filter as any)}
-                    className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                    className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                       activeFilter === filter
                         ? 'bg-white text-slate-900 shadow-sm'
                         : 'text-slate-500 hover:text-slate-700'
                     }`}
                   >
-                    {filter === 'ALL' ? 'All Status' : filter.charAt(0) + filter.slice(1).toLowerCase()}
+                    {filter === 'ALL' ? 'All Status' : filter.charAt(0) + filter.slice(1).toLowerCase()} ({count})
                   </button>
-                ))}
-              </div>
-            )}
+                );
+              })}
+            </div>
 
             {/* AY & Semester Filters */}
             <div className="flex gap-2 self-start sm:self-end">
@@ -175,12 +157,10 @@ export const AdvisorODRequestsView: React.FC<AdvisorODRequestsViewProps> = ({
               <CheckCircle2 className="w-6 h-6" />
             </div>
             <h3 className="text-base font-bold text-slate-900">
-              {isTutor ? "No approved OD records found" : `No ${activeFilter === 'ALL' ? '' : activeFilter.toLowerCase()} requests found`}
+              No {activeFilter === 'ALL' ? '' : activeFilter.toLowerCase()} OD requests found
             </h3>
             <p className="text-xs text-slate-500 max-w-sm mx-auto">
-              {isTutor 
-                ? "There are currently no advisor-approved OD records for your batch students."
-                : "There are currently no OD applications matching this filter for your cohort."}
+              There are currently no OD applications matching this filter.
             </p>
           </div>
         ) : (

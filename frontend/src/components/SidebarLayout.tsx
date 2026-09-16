@@ -84,14 +84,9 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({
     return false;
   };
 
-  // Pending OD count for advisor badge
-  const pendingAdvisorCount = odRequests.filter(
-    (od) => od.advisor_id === currentAdvisor.id && od.advisor_status === 'PENDING'
-  ).length;
-
-  // Approved OD count for tutor badge
-  const approvedBatchODCount = odRequests.filter(
-    (od) => isBatchOD(od) && od.advisor_status === 'APPROVED'
+  // Pending OD count for badge
+  const pendingODCount = (odRequests || []).filter(
+    (od) => od.advisor_status === 'PENDING'
   ).length;
 
   const pendingLeaveCount = (leaveApplications || []).filter(
@@ -306,18 +301,13 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({
               >
                 <div className="flex items-center gap-3">
                   <FileText className={`w-4 h-4 ${activeTab === 'advisor_requests' ? 'text-white' : 'text-amber-500'}`} />
-                  <span>{isTutor ? 'Batch Approved ODs' : 'OD Applications'}</span>
+                  <span>OD Applications</span>
                 </div>
-                {!isTutor && pendingAdvisorCount > 0 && (
+                {pendingODCount > 0 && (
                   <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
                     activeTab === 'advisor_requests' ? 'bg-white text-amber-800' : 'bg-amber-100 text-amber-800'
                   }`}>
-                    {pendingAdvisorCount}
-                  </span>
-                )}
-                {isTutor && approvedBatchODCount > 0 && (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-600">
-                    {approvedBatchODCount}
+                    {pendingODCount}
                   </span>
                 )}
               </button>
