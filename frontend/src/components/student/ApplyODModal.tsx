@@ -34,15 +34,18 @@ export const ApplyODModal: React.FC<ApplyODModalProps> = ({ isOpen, onClose, onS
 
   if (!isOpen) return null;
 
-  // Filter available students for team addition
-  const availableStudents = students.filter(
-    (s) =>
-      s.id !== currentStudent.id &&
-      !selectedTeamMembers.some((m) => m.id === s.id) &&
-      (memberSearchQuery.trim() === '' ||
-        s.name.toLowerCase().includes(memberSearchQuery.toLowerCase()) ||
-        s.roll_no.toLowerCase().includes(memberSearchQuery.toLowerCase()))
-  );
+  // Filter available students for team addition (searchable by roll number, name, department)
+  const availableStudents = students
+    .filter(
+      (s) =>
+        s.id !== currentStudent.id &&
+        !selectedTeamMembers.some((m) => m.id === s.id) &&
+        (memberSearchQuery.trim() === '' ||
+          s.name?.toLowerCase().includes(memberSearchQuery.toLowerCase()) ||
+          s.roll_no?.toLowerCase().includes(memberSearchQuery.toLowerCase()) ||
+          s.department?.toLowerCase().includes(memberSearchQuery.toLowerCase()))
+    )
+    .slice(0, 30);
 
   const handleAddMember = (student: Student) => {
     setSelectedTeamMembers((prev) => [...prev, student]);
@@ -408,33 +411,39 @@ export const ApplyODModal: React.FC<ApplyODModalProps> = ({ isOpen, onClose, onS
 
                   {/* Dropdown Suggestions */}
                   {isSearchingMembers && (
-                    <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-xl z-20 max-h-48 overflow-y-auto">
-                      {availableStudents.length === 0 ? (
-                        <div className="p-3 text-xs text-slate-500 text-center">
-                          No matching students found
-                        </div>
-                      ) : (
-                        availableStudents.map((s) => (
-                          <button
-                            key={s.id}
-                            type="button"
-                            id={`add-member-${s.roll_no}`}
-                            onClick={() => handleAddMember(s)}
-                            className="w-full text-left px-4 py-2.5 hover:bg-blue-50 flex items-center justify-between border-b last:border-0 border-slate-100 transition-colors cursor-pointer"
-                          >
-                            <div>
-                              <div className="text-sm font-semibold text-slate-800">
-                                {s.name}
+                    <>
+                      <div
+                        className="fixed inset-0 z-10"
+                        onClick={() => setIsSearchingMembers(false)}
+                      />
+                      <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-xl z-20 max-h-48 overflow-y-auto">
+                        {availableStudents.length === 0 ? (
+                          <div className="p-3 text-xs text-slate-500 text-center">
+                            No matching students found
+                          </div>
+                        ) : (
+                          availableStudents.map((s) => (
+                            <button
+                              key={s.id}
+                              type="button"
+                              id={`add-member-${s.roll_no}`}
+                              onClick={() => handleAddMember(s)}
+                              className="w-full text-left px-4 py-2.5 hover:bg-blue-50 flex items-center justify-between border-b last:border-0 border-slate-100 transition-colors cursor-pointer"
+                            >
+                              <div>
+                                <div className="text-sm font-semibold text-slate-800">
+                                  {s.name}
+                                </div>
+                                <div className="text-xs text-slate-500">
+                                  Roll No: {s.roll_no} {s.department ? `• ${s.department}` : ''}
+                                </div>
                               </div>
-                              <div className="text-xs text-slate-500">
-                                Roll No: {s.roll_no} • {s.department}
-                              </div>
-                            </div>
-                            <span className="text-xs text-blue-600 font-medium">+ Add</span>
-                          </button>
-                        ))
-                      )}
-                    </div>
+                              <span className="text-xs text-blue-600 font-medium">+ Add</span>
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    </>
                   )}
                 </div>
 
