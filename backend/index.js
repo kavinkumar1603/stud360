@@ -321,6 +321,13 @@ app.get('/api/data', authenticateToken, async (req, res) => {
       const lMap = new Map();
       (lRes1 || []).forEach(l => lMap.set(l.id, l));
       (lRes2 || []).forEach(l => lMap.set(l.id, l));
+      if (isTutor && studentIds.length > 0) {
+        const { data: batchLeaves } = await supabase
+          .from('leave_applications')
+          .select('*')
+          .in('student_id', studentIds);
+        (batchLeaves || []).forEach(l => lMap.set(l.id, l));
+      }
       leavesData = Array.from(lMap.values()).sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
       
       classesData = clRes || [];
@@ -404,7 +411,35 @@ app.delete('/api/od-requests/:id', authenticateToken, async (req, res) => {
 
   app.post('/api/leave-applications', authenticateToken, async (req, res) => {
     try {
-      const { data: inserted, error } = await supabase.from('leave_applications').insert(req.body).select().single();
+      const leaveData = { ...req.body };
+      const roll = (leaveData.student_roll || '').trim().toUpperCase();
+
+      // Auto-resolve tutor if missing
+      if (!leaveData.tutor_id && roll) {
+        if (/^24CS0(7[1-9]|8[0-9]|9[0-4])$/.test(roll)) {
+          const { data: tut } = await supabase.from('advisors').select('id, name').ilike('name', '%kirubakaran%').limit(1).maybeSingle();
+          if (tut) {
+            leaveData.tutor_id = tut.id;
+            if (!leaveData.tutor_name) leaveData.tutor_name = tut.name;
+          }
+        } else if (/^24CS0(9[5-9])|24CS1(0[1-9]|1[0-9]|20)$/.test(roll)) {
+          const { data: tut } = await supabase.from('advisors').select('id, name').ilike('name', '%geetha%').limit(1).maybeSingle();
+          if (tut) {
+            leaveData.tutor_id = tut.id;
+            if (!leaveData.tutor_name) leaveData.tutor_name = tut.name;
+          }
+        }
+      }
+
+      // Auto-resolve advisor if missing
+      if (!leaveData.advisor_id) {
+        const { data: adv } = await supabase.from('advisors').select('id, name').eq('title', 'advisor').limit(1).maybeSingle();
+        if (adv) {
+          leaveData.advisor_id = adv.id;
+        }
+      }
+
+      const { data: inserted, error } = await supabase.from('leave_applications').insert(leaveData).select().single();
       if (error) {
         throw error;
       }
