@@ -25,7 +25,8 @@ interface ODDetailAdvisorViewProps {
 }
 
 export const ODDetailAdvisorView: React.FC<ODDetailAdvisorViewProps> = ({ odRequest, onBack }) => {
-  const { odRequests, advisorReviewOD, advisorVerifyProof, deleteODRequest } = useApp();
+  const { currentAdvisor, odRequests, advisorReviewOD, advisorVerifyProof, deleteODRequest } = useApp();
+  const isTutor = currentAdvisor?.title === 'tutor';
 
   // Find live state from context
   const currentOD = odRequests.find((r) => r.id === odRequest.id) || odRequest;
@@ -80,15 +81,17 @@ export const ODDetailAdvisorView: React.FC<ODDetailAdvisorViewProps> = ({ odRequ
           <span>Back</span>
         </button>
 
-        <button
-          id="btn-delete-od-request"
-          onClick={handleDelete}
-          disabled={isActionPending}
-          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border border-red-200 bg-red-50 text-xs font-semibold text-red-700 hover:bg-red-100 transition-colors cursor-pointer"
-        >
-          <Trash2 className="w-4 h-4" />
-          <span>Remove Request</span>
-        </button>
+        {!isTutor && (
+          <button
+            id="btn-delete-od-request"
+            onClick={handleDelete}
+            disabled={isActionPending}
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border border-red-200 bg-red-50 text-xs font-semibold text-red-700 hover:bg-red-100 transition-colors cursor-pointer"
+          >
+            <Trash2 className="w-4 h-4" />
+            <span>Remove Request</span>
+          </button>
+        )}
       </div>
 
       {/* Main OD Info Card */}
@@ -98,8 +101,12 @@ export const ODDetailAdvisorView: React.FC<ODDetailAdvisorViewProps> = ({ odRequ
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 pb-5 border-b border-slate-100">
           <div className="space-y-2">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="px-2.5 py-0.5 rounded text-xs font-bold uppercase bg-amber-50 text-amber-700 border border-amber-200">
-                Advisor Review Mode
+              <span className={`px-2.5 py-0.5 rounded text-xs font-bold uppercase ${
+                isTutor 
+                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                  : 'bg-amber-50 text-amber-700 border border-amber-200'
+              }`}>
+                {isTutor ? 'Batch Approved Record' : 'Advisor Review Mode'}
               </span>
               <span className="text-xs text-slate-400">
                 Request ID: {currentOD.id}
@@ -192,8 +199,8 @@ export const ODDetailAdvisorView: React.FC<ODDetailAdvisorViewProps> = ({ odRequ
 
       </div>
 
-      {/* Decision Block for Pending Status */}
-      {currentOD.advisor_status === 'PENDING' && (
+      {/* Decision Block for Pending Status (Advisors only) */}
+      {!isTutor && currentOD.advisor_status === 'PENDING' && (
         <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
           <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
             <ShieldCheck className="w-5 h-5 text-amber-500" />
@@ -255,11 +262,17 @@ export const ODDetailAdvisorView: React.FC<ODDetailAdvisorViewProps> = ({ odRequ
         </div>
       )}
 
-      {currentOD.advisor_status === 'APPROVED' && currentOD.od_final_status === 'PENDING' && (
-        <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 flex items-center gap-3">
-          <Clock className="w-5 h-5 text-amber-600 shrink-0" />
+      {currentOD.advisor_status === 'APPROVED' && (
+        <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 flex items-center gap-3">
+          <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
           <div className="text-xs font-semibold">
-            <span className="font-bold">Awaiting Final Approval:</span> You have approved this OD request. It is now awaiting secondary/final administrative sign-off.
+            <span className="font-bold">{isTutor ? 'Approved by Faculty Advisor:' : 'You have approved this OD request:'}</span>{' '}
+            {isTutor 
+              ? 'This OD request for your batch member has been reviewed and approved by the Faculty Advisor.'
+              : 'It is now awaiting secondary/final administrative sign-off.'}
+            {currentOD.advisor_remarks && (
+              <p className="mt-1 text-emerald-800 font-medium italic">Remarks: "{currentOD.advisor_remarks}"</p>
+            )}
           </div>
         </div>
       )}
@@ -333,7 +346,7 @@ export const ODDetailAdvisorView: React.FC<ODDetailAdvisorViewProps> = ({ odRequ
                     )}
                   </div>
 
-                  {p.drive_link && p.proof_status === 'SUBMITTED' && (
+                  {!isTutor && p.drive_link && p.proof_status === 'SUBMITTED' && (
                     <div className="flex items-center gap-2 shrink-0">
                       <button
                         type="button"

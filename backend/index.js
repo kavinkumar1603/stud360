@@ -269,18 +269,59 @@ app.get('/api/data', authenticateToken, async (req, res) => {
       ]);
 
       advisorsData = advRes || [];
+      const currentAdv = advisorsData.find(a => a.id === id);
+      const isTutor = currentAdv?.title === 'tutor';
       
       const stMap = new Map();
       (stRes1 || []).forEach(s => stMap.set(s.id, s));
       (stRes2 || []).forEach(s => stMap.set(s.id, s));
+
+      // If tutor, also ensure all department students belonging to their batch are included in studentsData
+      const isTutorBatchRoll = (roll) => {
+        if (!roll || !currentAdv?.email) return false;
+        const r = roll.trim().toUpperCase();
+        if (currentAdv.email.includes('kirubakaran') && /^24CS0(7[1-9]|8[0-9]|9[0-4])$/.test(r)) return true;
+        if (currentAdv.email.includes('geetha') && (/^24CS0(9[5-9])$/.test(r) || /^24CS1(0[1-9]|1[0-9]|20)$/.test(r))) return true;
+        return false;
+      };
+
+      if (isTutor && currentAdv?.department) {
+        const { data: deptStudents } = await supabase
+          .from('students')
+          .select('id, roll_no, name, email, department, section, year, semester, advisor_id, tutor_id, class_id, is_representative, avatar')
+          .eq('department', currentAdv.department);
+        
+        (deptStudents || []).forEach(s => {
+          if (s.tutor_id === id || isTutorBatchRoll(s.roll_no)) {
+            stMap.set(s.id, s);
+          }
+        });
+      }
+
       studentsData = Array.from(stMap.values());
-      
       const studentIds = Array.from(stMap.keys());
-      if (studentIds.length > 0) {
-        const { data: odRes } = await supabase.from('od_requests').select('*').in('student_id', studentIds).order('created_at', { ascending: false });
-        odData = odRes || [];
+
+      // Fetch OD requests
+      const { data: allOdRes } = await supabase.from('od_requests').select('*').order('created_at', { ascending: false });
+      const allODs = allOdRes || [];
+
+      if (isTutor) {
+        // Tutors only see batch members' OD requests after advisor approval
+        odData = allODs.filter(od => {
+          if (od.advisor_status !== 'APPROVED') return false;
+          const isPrimaryBatch = studentIds.includes(od.student_id) || isTutorBatchRoll(od.student_roll);
+          const isTeamBatch = Array.isArray(od.team_members) && od.team_members.some(m => 
+            studentIds.includes(m.student_id) || isTutorBatchRoll(m.roll_no)
+          );
+          return isPrimaryBatch || isTeamBatch;
+        });
       } else {
-        odData = [];
+        // Faculty Advisors see all OD requests for their cohort
+        odData = allODs.filter(od => 
+          od.advisor_id === id || 
+          studentIds.includes(od.student_id) || 
+          (Array.isArray(od.team_members) && od.team_members.some(m => studentIds.includes(m.student_id)))
+        );
       }
       
       const lMap = new Map();

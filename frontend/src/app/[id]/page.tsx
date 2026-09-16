@@ -26,7 +26,7 @@ import { useRouter } from 'next/navigation';
 
 export default function DashboardRoute({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const { isAuthenticated, isInitializing, role, currentStudent } = useApp();
+  const { isAuthenticated, isInitializing, role, currentStudent, currentAdvisor } = useApp();
   const router = useRouter();
 
   const [activeTab, setActiveTab] = useState<NavTab>(role === 'ADVISOR' ? 'advisor_dashboard' : 'student_dashboard');
@@ -152,11 +152,11 @@ export default function DashboardRoute({ params }: { params: Promise<{ id: strin
           onSelectLeaveRequest={(l) => setSelectedLeave(l)}
           onNavigateTab={(tab) => {
             if (tab === 'requests') {
-              setAdvisorReqFilter('PENDING');
+              setAdvisorReqFilter(currentAdvisor?.title === 'tutor' ? 'APPROVED' : 'PENDING');
               setActiveTab('advisor_requests');
             }
             if (tab === 'all_requests') {
-              setAdvisorReqFilter('ALL');
+              setAdvisorReqFilter(currentAdvisor?.title === 'tutor' ? 'APPROVED' : 'ALL');
               setActiveTab('advisor_requests');
             }
             if (tab === 'leaves') {

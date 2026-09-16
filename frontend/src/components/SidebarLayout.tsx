@@ -63,9 +63,35 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({
 
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
+  const isTutor = currentAdvisor?.title === 'tutor';
+
+  // Check if a student belongs to the tutor's cohort/batch
+  const isBatchStudent = (studentId: string, studentRoll?: string) => {
+    if (!currentAdvisor) return false;
+    if (studentId && students.some(s => s.id === studentId && (s.tutor_id === currentAdvisor.id || s.advisor_id === currentAdvisor.id))) return true;
+    const s = students.find(st => st.id === studentId);
+    const roll = (studentRoll || s?.roll_no || '').trim().toUpperCase();
+    if (roll && currentAdvisor.email) {
+      if (currentAdvisor.email.includes('kirubakaran') && /^24CS0(7[1-9]|8[0-9]|9[0-4])$/.test(roll)) return true;
+      if (currentAdvisor.email.includes('geetha') && (/^24CS0(9[5-9])$/.test(roll) || /^24CS1(0[1-9]|1[0-9]|20)$/.test(roll))) return true;
+    }
+    return false;
+  };
+
+  const isBatchOD = (od: any) => {
+    if (isBatchStudent(od.student_id, od.student_roll)) return true;
+    if (Array.isArray(od.team_members) && od.team_members.some((m: any) => isBatchStudent(m.student_id, m.roll_no))) return true;
+    return false;
+  };
+
   // Pending OD count for advisor badge
   const pendingAdvisorCount = odRequests.filter(
     (od) => od.advisor_id === currentAdvisor.id && od.advisor_status === 'PENDING'
+  ).length;
+
+  // Approved OD count for tutor badge
+  const approvedBatchODCount = odRequests.filter(
+    (od) => isBatchOD(od) && od.advisor_status === 'APPROVED'
   ).length;
 
   const pendingLeaveCount = (leaveApplications || []).filter(
@@ -269,44 +295,45 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({
                 )}
               </button>
 
-              {currentAdvisor?.title !== 'tutor' && (
-                <>
-                  <button
-                    id="nav-advisor-requests"
-                    onClick={() => handleNavClick('advisor_requests')}
-                    className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                      activeTab === 'advisor_requests'
-                        ? 'bg-amber-600 text-white shadow-sm font-bold'
-                        : 'text-slate-600 hover:bg-amber-50 hover:text-amber-900'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <Clock className={`w-4 h-4 ${activeTab === 'advisor_requests' ? 'text-white' : 'text-amber-500'}`} />
-                      <span>OD Applications</span>
-                    </div>
-                    {pendingAdvisorCount > 0 && (
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                        activeTab === 'advisor_requests' ? 'bg-white text-amber-800' : 'bg-amber-100 text-amber-800'
-                      }`}>
-                        {pendingAdvisorCount}
-                      </span>
-                    )}
-                  </button>
+              <button
+                id="nav-advisor-requests"
+                onClick={() => handleNavClick('advisor_requests')}
+                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                  activeTab === 'advisor_requests'
+                    ? 'bg-amber-600 text-white shadow-sm font-bold'
+                    : 'text-slate-600 hover:bg-amber-50 hover:text-amber-900'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <FileText className={`w-4 h-4 ${activeTab === 'advisor_requests' ? 'text-white' : 'text-amber-500'}`} />
+                  <span>{isTutor ? 'Batch Approved ODs' : 'OD Applications'}</span>
+                </div>
+                {!isTutor && pendingAdvisorCount > 0 && (
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                    activeTab === 'advisor_requests' ? 'bg-white text-amber-800' : 'bg-amber-100 text-amber-800'
+                  }`}>
+                    {pendingAdvisorCount}
+                  </span>
+                )}
+                {isTutor && approvedBatchODCount > 0 && (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-600">
+                    {approvedBatchODCount}
+                  </span>
+                )}
+              </button>
 
-                  <button
-                    id="nav-advisor-proofs"
-                    onClick={() => handleNavClick('advisor_proofs')}
-                    className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                      activeTab === 'advisor_proofs'
-                        ? 'bg-amber-600 text-white shadow-sm font-bold'
-                        : 'text-slate-600 hover:bg-amber-50 hover:text-amber-900'
-                    }`}
-                  >
-                    <FileText className={`w-4 h-4 ${activeTab === 'advisor_proofs' ? 'text-white' : 'text-amber-500'}`} />
-                    <span>Proof Submissions</span>
-                  </button>
-                </>
-              )}
+              <button
+                id="nav-advisor-proofs"
+                onClick={() => handleNavClick('advisor_proofs')}
+                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                  activeTab === 'advisor_proofs'
+                    ? 'bg-amber-600 text-white shadow-sm font-bold'
+                    : 'text-slate-600 hover:bg-amber-50 hover:text-amber-900'
+                }`}
+              >
+                <FileText className={`w-4 h-4 ${activeTab === 'advisor_proofs' ? 'text-white' : 'text-amber-500'}`} />
+                <span>Proof Submissions</span>
+              </button>
 
               <button
                 id="nav-advisor-profile"
