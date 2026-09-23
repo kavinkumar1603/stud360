@@ -173,7 +173,7 @@ app.get('/api/data', authenticateToken, async (req, res) => {
   try {
     const { id, role } = req.user;
     
-    let studentsData = [], advisorsData = [], odData = [], deadlinesData = [], classesData = [], leavesData = [];
+    let studentsData = [], advisorsData = [], odData = [], deadlinesData = [], classesData = [], leavesData = [], internshipsData = [];
     
     if (role === 'STUDENT') {
       const { data: studentRes } = await supabase.from('students').select('id, roll_no, name, email, phone, department, section, year, semester, advisor_id, tutor_id, class_id, is_representative, avatar').eq('id', id).single();
@@ -207,14 +207,17 @@ app.get('/api/data', authenticateToken, async (req, res) => {
 
       const [
         { data: odRes },
-        { data: leavesRes, error: leavesError }
+        { data: leavesRes, error: leavesError },
+        { data: internshipsRes }
       ] = await Promise.all([
         supabase.from('od_requests').select('*').or(`student_id.eq.${id},team_members.cs.[{"student_id":"${id}"}]`).order('created_at', { ascending: false }),
-        leavesQuery
+        leavesQuery,
+        supabase.from('internships').select('*').eq('student_id', id).order('created_at', { ascending: false })
       ]);
       
       odData = odRes || [];
       leavesData = leavesRes || [];
+      internshipsData = internshipsRes || [];
       
       if (studentsData.length > 0) {
           const currentStudent = studentsData.find(s => s.id === id) || studentsData[0];
@@ -324,7 +327,8 @@ app.get('/api/data', authenticateToken, async (req, res) => {
       odRequests: odData,
       deadlines: deadlinesData,
       classes: classesData,
-      leaveApplications: leavesData
+      leaveApplications: leavesData,
+      internships: internshipsData
     });
   } catch (error) {
     console.error("Error fetching data processing failed");
@@ -512,6 +516,39 @@ app.post('/api/students/:id/representative', authenticateToken, async (req, res)
   } catch (error) {
     console.error('Toggle representative error:', error);
     res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.post('/api/internships', authenticateToken, async (req, res) => {
+  try {
+    const { data: inserted, error } = await supabase.from('internships').insert(req.body).select().single();
+    if (error) throw error;
+    res.json(inserted);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.put('/api/internships/:id', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updates = req.body;
+    const { data: updated, error } = await supabase.from('internships').update(updates).eq('id', id).select().single();
+    if (error) throw error;
+    res.json(updated);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.delete('/api/internships/:id', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { error } = await supabase.from('internships').delete().eq('id', id);
+    if (error) throw error;
+    res.json({ message: 'Deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 });
 

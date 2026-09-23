@@ -15,7 +15,8 @@ import {
   Class,
   LeaveApplication,
   LeaveType,
-  ScholarType
+  ScholarType,
+  Internship
 } from '../types';
 
 export interface ToastMessage {
@@ -44,6 +45,7 @@ interface AppContextType {
   classes: Class[];
   odRequests: ODRequest[];
   deadlines: Deadline[];
+  internships: Internship[];
   toasts: ToastMessage[];
   addToast: (message: string, type?: 'success' | 'error' | 'info') => void;
   removeToast: (id: string) => void;
@@ -71,6 +73,9 @@ interface AppContextType {
   deleteLeaveApplication: (id: string) => Promise<void>;
   updateLeaveInformedStatus: (id: string, is_informed: boolean) => Promise<void>;
   toggleRepresentativeStatus: (studentId: string, isRep: boolean) => Promise<void>;
+  addInternship: (data: Partial<Internship>) => Promise<void>;
+  updateInternship: (id: string, data: Partial<Internship>) => Promise<void>;
+  deleteInternship: (id: string) => Promise<void>;
   resetToDefaultData: () => void;
 }
 
@@ -95,6 +100,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [odRequests, setOdRequests] = useState<ODRequest[]>([]);
   const [leaveApplications, setLeaveApplications] = useState<LeaveApplication[]>([]);
   const [deadlines, setDeadlines] = useState<Deadline[]>([]);
+  const [internships, setInternships] = useState<Internship[]>([]);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
   // Fetch data from Node.js backend on mount and poll for dynamic updates
@@ -141,6 +147,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           setOdRequests(mapped);
         }
         if (data.deadlines) setDeadlines(data.deadlines);
+        if (data.internships) setInternships(data.internships);
         
         let storedUserId = sessionStorage.getItem('userId');
         let storedUserRole = sessionStorage.getItem('userRole');
@@ -724,6 +731,56 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  const addInternship = async (data: Partial<Internship>) => {
+    if (!currentStudent?.id) return;
+    try {
+      const res = await fetch(`${API_URL}/internships`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${sessionStorage.getItem('token')}` },
+        body: JSON.stringify({ ...data, student_id: currentStudent.id })
+      });
+      if (!res.ok) throw new Error('Failed to save internship');
+      const inserted = await res.json();
+      setInternships(prev => [inserted, ...prev]);
+      addToast('Internship added successfully', 'success');
+    } catch (error) {
+      addToast('Error adding internship', 'error');
+      console.error(error);
+    }
+  };
+
+  const updateInternship = async (id: string, data: Partial<Internship>) => {
+    try {
+      const res = await fetch(`${API_URL}/internships/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${sessionStorage.getItem('token')}` },
+        body: JSON.stringify(data)
+      });
+      if (!res.ok) throw new Error('Failed to update internship');
+      const updated = await res.json();
+      setInternships(prev => prev.map(i => i.id === id ? updated : i));
+      addToast('Internship updated successfully', 'success');
+    } catch (error) {
+      addToast('Error updating internship', 'error');
+      console.error(error);
+    }
+  };
+
+  const deleteInternship = async (id: string) => {
+    try {
+      const res = await fetch(`${API_URL}/internships/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${sessionStorage.getItem('token')}` }
+      });
+      if (!res.ok) throw new Error('Failed to delete internship');
+      setInternships(prev => prev.filter(i => i.id !== id));
+      addToast('Internship deleted successfully', 'info');
+    } catch (error) {
+      addToast('Error deleting internship', 'error');
+      console.error(error);
+    }
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -746,6 +803,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         classes,
         odRequests,
         deadlines,
+        internships,
         toasts,
         addToast,
         removeToast,
@@ -766,6 +824,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         deleteLeaveApplication,
         updateLeaveInformedStatus,
         toggleRepresentativeStatus,
+        addInternship,
+        updateInternship,
+        deleteInternship,
         resetToDefaultData
       }}
     >

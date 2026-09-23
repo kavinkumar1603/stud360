@@ -123,3 +123,39 @@ export interface StatusPillConfig {
   borderClass: string;
   isTappable?: boolean;
 }
+
+export type InternshipType = 'Internal' | 'External';
+export type InternshipStatus = 'Ongoing' | 'Completed';
+export type LocationType = 'On-site' | 'Remote' | 'Hybrid';
+
+export interface Mentor {
+  name: string;
+  email: string;
+  contact: string;
+}
+
+export interface Internship {
+  id: string;
+  student_id: string;
+  internship_type: InternshipType;
+  status: InternshipStatus;
+  title: string;
+  organization: string;
+  department?: string;
+  domain?: string;
+  description?: string;
+  skills_used?: string;
+  start_date: string;
+  end_date?: string;
+  mentors?: Mentor[];
+  location_type?: LocationType;
+  company_location?: string;
+  company_website?: string;
+  documents?: {
+    offer_letter?: string;
+    internship_certificate?: string;
+    completion_certificate?: string;
+    internship_report?: string;
+  };
+  created_at: string;
+}

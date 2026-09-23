@@ -10,6 +10,9 @@ import { ApplyODModal } from '@/components/student/ApplyODModal';
 import { ApplyLeaveModal } from '@/components/student/ApplyLeaveModal';
 import { LeaveApplicationsListView } from '@/components/student/LeaveApplicationsListView';
 import { RepresentativeDashboardView } from '@/components/student/RepresentativeDashboardView';
+import { InternshipsListView } from '@/components/student/InternshipsListView';
+import { InternshipDetailView } from '@/components/student/InternshipDetailView';
+import { AddInternshipModal } from '@/components/student/AddInternshipModal';
 import { MyStudentsView } from '@/components/advisor/MyStudentsView';
 import { AdvisorODRequestsView } from '@/components/advisor/AdvisorODRequestsView';
 import { AdvisorLeaveRequestsView } from '@/components/advisor/AdvisorLeaveRequestsView';
@@ -20,7 +23,7 @@ import { AdvisorDashboardView } from '@/components/advisor/AdvisorDashboardView'
 import { ManageDeadlinesView } from '@/components/advisor/ManageDeadlinesView';
 import { AdvisorODProofsView } from '@/components/advisor/AdvisorODProofsView';
 import { LeaveDetailAdvisorView } from '@/components/advisor/LeaveDetailAdvisorView';
-import { ODRequest, Student, LeaveApplication } from '@/types';
+import { ODRequest, Student, LeaveApplication, Internship } from '@/types';
 import { Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
@@ -33,10 +36,13 @@ export default function DashboardRoute({ params }: { params: Promise<{ id: strin
   const [selectedOD, setSelectedOD] = useState<ODRequest | null>(null);
   const [selectedLeave, setSelectedLeave] = useState<LeaveApplication | null>(null);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+  const [selectedInternship, setSelectedInternship] = useState<Internship | null>(null);
+  const [internshipToEdit, setInternshipToEdit] = useState<Internship | null>(null);
   const [advisorReqFilter, setAdvisorReqFilter] = useState<'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED'>('PENDING');
 
   const [isApplyODOpen, setIsApplyODOpen] = useState(false);
   const [isApplyLeaveOpen, setIsApplyLeaveOpen] = useState(false);
+  const [isAddInternshipOpen, setIsAddInternshipOpen] = useState(false);
   // Sync tab state with browser history to fix back button bug
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -85,6 +91,7 @@ export default function DashboardRoute({ params }: { params: Promise<{ id: strin
     setActiveTab(tab);
     setSelectedOD(null);
     setSelectedStudent(null);
+    setSelectedInternship(null);
     if (typeof window !== 'undefined') {
       // Use URL constructor to only change search params if we wanted, or just replace state. We'll just pushState.
       window.history.pushState({ tab }, '', window.location.href);
@@ -116,6 +123,15 @@ export default function DashboardRoute({ params }: { params: Promise<{ id: strin
         ) : (
           <ODDetailView odRequest={selectedOD} onBack={() => setSelectedOD(null)} />
         )
+      ) : selectedInternship ? (
+        <InternshipDetailView
+          internship={selectedInternship}
+          onBack={() => setSelectedInternship(null)}
+          onEdit={(internship) => {
+            setInternshipToEdit(internship);
+            setIsAddInternshipOpen(true);
+          }}
+        />
       ) : selectedStudent ? (
         <StudentProfileAdvisorView
           student={selectedStudent}
@@ -139,6 +155,14 @@ export default function DashboardRoute({ params }: { params: Promise<{ id: strin
       ) : activeTab === 'student_leaves' ? (
         <LeaveApplicationsListView
           onOpenApplyLeave={() => setIsApplyLeaveOpen(true)}
+        />
+      ) : activeTab === 'student_internships' ? (
+        <InternshipsListView
+          onOpenAddInternship={() => {
+            setInternshipToEdit(null);
+            setIsAddInternshipOpen(true);
+          }}
+          onSelectInternship={(internship) => setSelectedInternship(internship)}
         />
       ) : activeTab === 'student_rep_dashboard' && currentStudent?.is_representative ? (
         <RepresentativeDashboardView />
@@ -209,6 +233,21 @@ export default function DashboardRoute({ params }: { params: Promise<{ id: strin
         onSubmitted={() => {
           setActiveTab('student_leaves');
           setSelectedOD(null);
+        }}
+      />
+      <AddInternshipModal
+        isOpen={isAddInternshipOpen}
+        onClose={() => {
+          setIsAddInternshipOpen(false);
+          setInternshipToEdit(null);
+        }}
+        internshipToEdit={internshipToEdit}
+        onSubmitted={() => {
+          setActiveTab('student_internships');
+          // If editing a selected internship, update the selected view
+          if (internshipToEdit) {
+            setSelectedInternship(null);
+          }
         }}
       />
     </SidebarLayout>
