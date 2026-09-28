@@ -23,6 +23,7 @@ import { AdvisorDashboardView } from '@/components/advisor/AdvisorDashboardView'
 import { ManageDeadlinesView } from '@/components/advisor/ManageDeadlinesView';
 import { AdvisorODProofsView } from '@/components/advisor/AdvisorODProofsView';
 import { LeaveDetailAdvisorView } from '@/components/advisor/LeaveDetailAdvisorView';
+import { AdvisorInternshipsView } from '@/components/advisor/AdvisorInternshipsView';
 import { ODRequest, Student, LeaveApplication, Internship } from '@/types';
 import { Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -127,6 +128,7 @@ export default function DashboardRoute({ params }: { params: Promise<{ id: strin
         <InternshipDetailView
           internship={selectedInternship}
           onBack={() => setSelectedInternship(null)}
+          canEdit={role === 'STUDENT'}
           onEdit={(internship) => {
             setInternshipToEdit(internship);
             setIsAddInternshipOpen(true);
@@ -137,6 +139,7 @@ export default function DashboardRoute({ params }: { params: Promise<{ id: strin
           student={selectedStudent}
           onBack={() => setSelectedStudent(null)}
           onSelectODRequest={(od) => setSelectedOD(od)}
+          onSelectInternship={(internship) => setSelectedInternship(internship)}
         />
       ) : activeTab === 'student_dashboard' ? (
         <DashboardView
@@ -174,6 +177,7 @@ export default function DashboardRoute({ params }: { params: Promise<{ id: strin
         <AdvisorDashboardView
           onSelectODRequest={(od) => setSelectedOD(od)}
           onSelectLeaveRequest={(l) => setSelectedLeave(l)}
+          onSelectInternship={(internship) => setSelectedInternship(internship)}
           onNavigateTab={(tab) => {
             if (tab === 'requests') {
               setAdvisorReqFilter(currentAdvisor?.title === 'tutor' ? 'APPROVED' : 'PENDING');
@@ -192,6 +196,7 @@ export default function DashboardRoute({ params }: { params: Promise<{ id: strin
               setActiveTab('advisor_leaves');
             }
             if (tab === 'students') setActiveTab('advisor_students');
+            if (tab === 'internships') setActiveTab('advisor_internships');
           }}
         />
       ) : activeTab === 'advisor_students' && role === 'ADVISOR' ? (
@@ -200,6 +205,8 @@ export default function DashboardRoute({ params }: { params: Promise<{ id: strin
         <AdvisorODRequestsView onSelectODRequest={(od) => setSelectedOD(od)} defaultFilter={advisorReqFilter} />
       ) : activeTab === 'advisor_leaves' && role === 'ADVISOR' ? (
         <AdvisorLeaveRequestsView onSelectLeaveRequest={(l) => setSelectedLeave(l)} defaultFilter={advisorReqFilter} />
+      ) : activeTab === 'advisor_internships' && role === 'ADVISOR' ? (
+        <AdvisorInternshipsView onSelectInternship={(internship) => setSelectedInternship(internship)} />
       ) : activeTab === 'advisor_deadlines' && role === 'ADVISOR' ? (
         <ManageDeadlinesView />
       ) : activeTab === 'advisor_proofs' && role === 'ADVISOR' ? (

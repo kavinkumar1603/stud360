@@ -11,7 +11,7 @@ interface AdvisorODRequestsViewProps {
   defaultFilter?: 'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED';
 }
 
-export const AdvisorODRequestsView: React.FC<AdvisorODRequestsViewProps> = ({ 
+export const AdvisorODRequestsView: React.FC<AdvisorODRequestsViewProps> = ({
   onSelectODRequest,
   defaultFilter = 'PENDING'
 }) => {
@@ -19,7 +19,7 @@ export const AdvisorODRequestsView: React.FC<AdvisorODRequestsViewProps> = ({
   const isTutor = currentAdvisor?.title === 'tutor';
   const [activeFilter, setActiveFilter] = useState<'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED'>(defaultFilter);
   const [activeType, setActiveType] = useState<'ALL' | 'INDIVIDUAL' | 'TEAM'>('ALL');
-  
+
   // New state for AY and Semester filters
   const [selectedAY, setSelectedAY] = useState<string>('ALL');
   const [selectedSem, setSelectedSem] = useState<string>('ALL');
@@ -39,7 +39,7 @@ export const AdvisorODRequestsView: React.FC<AdvisorODRequestsViewProps> = ({
 
   // All OD requests are visible to both advisors and tutors
   const allRequests = odRequests || [];
-  
+
   const displayedRequests = allRequests.filter(od => {
     if (activeFilter !== 'ALL' && od.advisor_status !== activeFilter) return false;
     if (activeType === 'INDIVIDUAL' && od.request_type === 'Team') return false;
@@ -50,7 +50,7 @@ export const AdvisorODRequestsView: React.FC<AdvisorODRequestsViewProps> = ({
   });
 
   const getStatusIcon = (status: string) => {
-    switch(status) {
+    switch (status) {
       case 'APPROVED': return <CheckCircle className="w-4 h-4 text-emerald-500" />;
       case 'REJECTED': return <XCircle className="w-4 h-4 text-red-500" />;
       default: return <Clock className="w-4 h-4 text-amber-500" />;
@@ -66,7 +66,7 @@ export const AdvisorODRequestsView: React.FC<AdvisorODRequestsViewProps> = ({
 
   return (
     <div className="space-y-6">
-      
+
       {/* Header */}
       <div className="flex flex-col gap-4">
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
@@ -78,22 +78,21 @@ export const AdvisorODRequestsView: React.FC<AdvisorODRequestsViewProps> = ({
             <p className="text-xs text-slate-500 mt-1 mb-4">
               Review and track student OD requests
             </p>
-            
+
             <div className="flex bg-slate-100 p-1 rounded-xl w-fit">
               {['ALL', 'INDIVIDUAL', 'TEAM'].map((typeFilter) => (
                 <button
                   key={typeFilter}
                   onClick={() => setActiveType(typeFilter as any)}
-                  className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                    activeType === typeFilter
+                  className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${activeType === typeFilter
                       ? 'bg-white text-slate-900 shadow-sm'
                       : 'text-slate-500 hover:text-slate-700'
-                  }`}
+                    }`}
                 >
                   {typeFilter === 'ALL' ? 'All Types' : typeFilter === 'INDIVIDUAL' ? 'Individual' : 'Team'}
                 </button>
               ))}
-              </div>
+            </div>
           </div>
 
           <div className="flex flex-col gap-3 shrink-0">
@@ -112,11 +111,10 @@ export const AdvisorODRequestsView: React.FC<AdvisorODRequestsViewProps> = ({
                   <button
                     key={filter}
                     onClick={() => setActiveFilter(filter as any)}
-                    className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                      activeFilter === filter
+                    className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${activeFilter === filter
                         ? 'bg-white text-slate-900 shadow-sm'
                         : 'text-slate-500 hover:text-slate-700'
-                    }`}
+                      }`}
                   >
                     {filter === 'ALL' ? 'All Status' : filter.charAt(0) + filter.slice(1).toLowerCase()} ({count})
                   </button>
@@ -152,18 +150,18 @@ export const AdvisorODRequestsView: React.FC<AdvisorODRequestsViewProps> = ({
 
       {/* List or Empty State */}
       {displayedRequests.length === 0 ? (
-          <div className="bg-white border border-slate-200 rounded-2xl p-12 text-center space-y-3 shadow-xs">
-            <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-400 mx-auto flex items-center justify-center">
-              <CheckCircle2 className="w-6 h-6" />
-            </div>
-            <h3 className="text-base font-bold text-slate-900">
-              No {activeFilter === 'ALL' ? '' : activeFilter.toLowerCase()} OD requests found
-            </h3>
-            <p className="text-xs text-slate-500 max-w-sm mx-auto">
-              There are currently no OD applications matching this filter.
-            </p>
+        <div className="bg-white border border-slate-200 rounded-2xl p-12 text-center space-y-3 shadow-xs">
+          <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-400 mx-auto flex items-center justify-center">
+            <CheckCircle2 className="w-6 h-6" />
           </div>
-        ) : (
+          <h3 className="text-base font-bold text-slate-900">
+            No {activeFilter === 'ALL' ? '' : activeFilter.toLowerCase()} OD requests found
+          </h3>
+          <p className="text-xs text-slate-500 max-w-sm mx-auto">
+            There are currently no OD applications matching this filter.
+          </p>
+        </div>
+      ) : (
         <div className="bg-white border border-slate-200 rounded-2xl divide-y divide-slate-100 shadow-xs overflow-hidden">
           {displayedRequests.map((od) => {
             const isPrimary = isBatchStudent(od.student_id, od.student_roll);
@@ -180,11 +178,10 @@ export const AdvisorODRequestsView: React.FC<AdvisorODRequestsViewProps> = ({
                 <div className="space-y-1.5 min-w-0">
                   <div className="flex items-center gap-2.5 flex-wrap">
                     <span
-                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                        od.request_type === 'Team'
+                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${od.request_type === 'Team'
                           ? 'bg-purple-100 text-purple-700'
                           : 'bg-slate-100 text-slate-700'
-                      }`}
+                        }`}
                     >
                       {od.request_type === 'Team' ? <Users className="w-3 h-3" /> : <User className="w-3 h-3" />}
                       {od.request_type}
@@ -212,32 +209,32 @@ export const AdvisorODRequestsView: React.FC<AdvisorODRequestsViewProps> = ({
                   </p>
                 </div>
 
-              <div className="flex items-center gap-4 shrink-0 self-end sm:self-center">
-                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-bold capitalize bg-white shadow-sm">
-                  {getStatusIcon(od.advisor_status)}
-                  <span className={
-                    od.advisor_status === 'APPROVED' ? 'text-emerald-700' :
-                    od.advisor_status === 'REJECTED' ? 'text-red-700' : 'text-amber-700'
-                  }>
-                    {od.advisor_status.toLowerCase()}
-                  </span>
-                </div>
-                
-                {!isTutor && (
-                  <button
-                    onClick={(e) => handleDelete(e, od.id)}
-                    className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
-                    title="Remove Request"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                )}
+                <div className="flex items-center gap-4 shrink-0 self-end sm:self-center">
+                  <div className="flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-bold capitalize bg-white shadow-sm">
+                    {getStatusIcon(od.advisor_status)}
+                    <span className={
+                      od.advisor_status === 'APPROVED' ? 'text-emerald-700' :
+                        od.advisor_status === 'REJECTED' ? 'text-red-700' : 'text-amber-700'
+                    }>
+                      {od.advisor_status.toLowerCase()}
+                    </span>
+                  </div>
 
-                <ChevronRight className="w-4 h-4 text-slate-400" />
+                  {!isTutor && (
+                    <button
+                      onClick={(e) => handleDelete(e, od.id)}
+                      className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                      title="Remove Request"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
+
+                  <ChevronRight className="w-4 h-4 text-slate-400" />
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
         </div>
       )}
     </div>

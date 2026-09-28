@@ -215,9 +215,31 @@ app.get('/api/data', authenticateToken, async (req, res) => {
         supabase.from('internships').select('*').eq('student_id', id).order('created_at', { ascending: false })
       ]);
       
-      odData = odRes || [];
+      const formatOD = (od) => {
+        if (!od) return od;
+        let cat = od.od_category;
+        if (!cat) {
+          if (od.description && od.description.includes('OD Scope: Internal OD')) {
+            cat = 'Internal';
+          } else if (od.description && od.description.includes('OD Scope: External OD')) {
+            cat = 'External';
+          } else {
+            cat = 'External';
+          }
+        }
+        return { ...od, od_category: cat };
+      };
+      
+      odData = (odRes || []).map(formatOD);
       leavesData = leavesRes || [];
-      internshipsData = internshipsRes || [];
+      internshipsData = (internshipsRes || []).map(item => ({
+        ...item,
+        student_name: currentStudent?.name || '',
+        student_roll: currentStudent?.roll_no || '',
+        student_dept: currentStudent?.department || '',
+        student_section: currentStudent?.section || '',
+        student_avatar: currentStudent?.avatar || '',
+      }));
       
       if (studentsData.length > 0) {
           const currentStudent = studentsData.find(s => s.id === id) || studentsData[0];
@@ -300,7 +322,21 @@ app.get('/api/data', authenticateToken, async (req, res) => {
 
       // Fetch OD requests
       const { data: allOdRes } = await supabase.from('od_requests').select('*').order('created_at', { ascending: false });
-      const allODs = allOdRes || [];
+      const formatOD = (od) => {
+        if (!od) return od;
+        let cat = od.od_category;
+        if (!cat) {
+          if (od.description && od.description.includes('OD Scope: Internal OD')) {
+            cat = 'Internal';
+          } else if (od.description && od.description.includes('OD Scope: External OD')) {
+            cat = 'External';
+          } else {
+            cat = 'External';
+          }
+        }
+        return { ...od, od_category: cat };
+      };
+      const allODs = (allOdRes || []).map(formatOD);
 
       // All OD requests are visible to advisors and tutors
       odData = allODs;
@@ -319,6 +355,36 @@ app.get('/api/data', authenticateToken, async (req, res) => {
       
       classesData = clRes || [];
       deadlinesData = dlRes || [];
+
+      // Fetch Internships for Advisor
+      const { data: allInternshipsRes } = await supabase
+        .from('internships')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      const internStudentIds = [...new Set((allInternshipsRes || []).map(i => i.student_id))];
+      let internStudentsMap = new Map();
+      if (internStudentIds.length > 0) {
+        const { data: internStudents } = await supabase
+          .from('students')
+          .select('id, roll_no, name, department, section, year, semester, avatar, advisor_id, tutor_id')
+          .in('id', internStudentIds);
+        (internStudents || []).forEach(s => internStudentsMap.set(s.id, s));
+      }
+
+      internshipsData = (allInternshipsRes || []).map(item => {
+        const st = internStudentsMap.get(item.student_id) || stMap.get(item.student_id);
+        return {
+          ...item,
+          student_name: st?.name || '',
+          student_roll: st?.roll_no || '',
+          student_dept: st?.department || '',
+          student_section: st?.section || '',
+          student_avatar: st?.avatar || '',
+          student_advisor_id: st?.advisor_id || '',
+          student_tutor_id: st?.tutor_id || '',
+        };
+      });
     }
 
     res.json({
@@ -366,8 +432,16 @@ app.delete('/api/classes/:id', authenticateToken, async (req, res) => {
 
 app.post('/api/od-requests', authenticateToken, async (req, res) => {
   try {
-    const { data: inserted, error } = await supabase.from('od_requests').insert(req.body).select().single();
-    if (error) throw error;
+    let payload = { ...req.body };
+    let { data: inserted, error } = await supabase.from('od_requests').insert(payload).select().single();
+    if (error && error.message && error.message.includes('column') && error.message.includes('does not exist')) {
+      const { od_category, ...fallbackPayload } = payload;
+      const resFallback = await supabase.from('od_requests').insert(fallbackPayload).select().single();
+      if (resFallback.error) throw resFallback.error;
+      inserted = { ...resFallback.data, od_category: payload.od_category || 'External' };
+    } else if (error) {
+      throw error;
+    }
     res.json(inserted);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -377,9 +451,16 @@ app.post('/api/od-requests', authenticateToken, async (req, res) => {
 app.put('/api/od-requests/:id', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
-    const updates = req.body;
-    const { data: updated, error } = await supabase.from('od_requests').update(updates).eq('id', id).select().single();
-    if (error) throw error;
+    let updates = { ...req.body };
+    let { data: updated, error } = await supabase.from('od_requests').update(updates).eq('id', id).select().single();
+    if (error && error.message && error.message.includes('column') && error.message.includes('does not exist')) {
+      const { od_category, ...fallbackUpdates } = updates;
+      const resFallback = await supabase.from('od_requests').update(fallbackUpdates).eq('id', id).select().single();
+      if (resFallback.error) throw resFallback.error;
+      updated = { ...resFallback.data, od_category: updates.od_category || 'External' };
+    } else if (error) {
+      throw error;
+    }
     res.json(updated);
   } catch (error) {
     res.status(500).json({ error: error.message });

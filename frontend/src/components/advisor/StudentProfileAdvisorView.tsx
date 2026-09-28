@@ -2,29 +2,36 @@
 
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import { ODRequest, Student } from '../../types';
+import { ODRequest, Student, Internship } from '../../types';
 import { StatusPill } from '../StatusPill';
 import { formatDateRange } from '../../utils/validation';
-import { ArrowLeft, FileText, Mail, ChevronRight } from 'lucide-react';
+import { ArrowLeft, FileText, Mail, ChevronRight, Briefcase, Building2, Calendar, MapPin } from 'lucide-react';
 
 interface StudentProfileAdvisorViewProps {
   student: Student;
   onBack: () => void;
   onSelectODRequest: (od: ODRequest) => void;
+  onSelectInternship?: (internship: Internship) => void;
 }
 
 export const StudentProfileAdvisorView: React.FC<StudentProfileAdvisorViewProps> = ({
   student,
   onBack,
-  onSelectODRequest
+  onSelectODRequest,
+  onSelectInternship
 }) => {
-  const { odRequests } = useApp();
+  const { odRequests, internships } = useApp();
 
-  const [activeTab, setActiveTab] = useState<'od_history'>('od_history');
+  const [activeTab, setActiveTab] = useState<'od_history' | 'internships'>('od_history');
 
   // Find all OD history for this student
   const studentODHistory = odRequests.filter(
-    (od) => od.student_id === student.id || od.team_members.some((m) => m.student_id === student.id)
+    (od) => od.student_id === student.id || od.team_members?.some((m) => m.student_id === student.id)
+  );
+
+  // Find all Internships for this student
+  const studentInternships = (internships || []).filter(
+    (i) => i.student_id === student.id
   );
 
   return (
@@ -42,14 +49,14 @@ export const StudentProfileAdvisorView: React.FC<StudentProfileAdvisorViewProps>
 
       {/* Student Profile Overview Card */}
       <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex flex-col sm:flex-row items-center gap-6">
-        <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-bold text-xl flex items-center justify-center shrink-0 shadow-md shadow-blue-500/20">
+        <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-amber-500 to-amber-700 text-white font-bold text-xl flex items-center justify-center shrink-0 shadow-md shadow-amber-500/20">
           {student.name.split(' ').map((n) => n[0]).join('')}
         </div>
 
         <div className="space-y-1 text-center sm:text-left flex-1">
           <div className="flex items-center justify-center sm:justify-start gap-2">
             <h1 className="text-xl font-bold text-slate-900">{student.name}</h1>
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-blue-800 border border-blue-200">
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200">
               Advisee Profile
             </span>
           </div>
@@ -63,19 +70,32 @@ export const StudentProfileAdvisorView: React.FC<StudentProfileAdvisorViewProps>
         </div>
       </div>
 
-      {/* Tabs: OD History */}
+      {/* Tabs: OD History & Internships */}
       <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
         <button
           id="tab-advisor-student-od"
           onClick={() => setActiveTab('od_history')}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
             activeTab === 'od_history'
-              ? 'bg-blue-600 text-white shadow-md'
+              ? 'bg-amber-600 text-white shadow-md'
               : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
           }`}
         >
           <FileText className="w-4 h-4" />
           <span>OD History ({studentODHistory.length})</span>
+        </button>
+
+        <button
+          id="tab-advisor-student-internships"
+          onClick={() => setActiveTab('internships')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            activeTab === 'internships'
+              ? 'bg-amber-600 text-white shadow-md'
+              : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+          }`}
+        >
+          <Briefcase className="w-4 h-4" />
+          <span>Internships ({studentInternships.length})</span>
         </button>
       </div>
 
@@ -111,6 +131,69 @@ export const StudentProfileAdvisorView: React.FC<StudentProfileAdvisorViewProps>
                   <div className="flex items-center gap-3 shrink-0">
                     <StatusPill type="OD" odRequest={od} />
                     <ChevronRight className="w-4 h-4 text-slate-400" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Tab Content 2: Internships */}
+      {activeTab === 'internships' && (
+        <div>
+          {studentInternships.length === 0 ? (
+            <div className="bg-white border border-slate-200 rounded-2xl p-10 text-center space-y-2 text-slate-500 text-xs">
+              No internship records found for this student.
+            </div>
+          ) : (
+            <div className="bg-white border border-slate-200 rounded-2xl divide-y divide-slate-100 shadow-xs overflow-hidden">
+              {studentInternships.map((internship) => (
+                <div
+                  key={internship.id}
+                  onClick={() => onSelectInternship?.(internship)}
+                  className="p-4 hover:bg-slate-50 transition-colors cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-3 group"
+                >
+                  <div className="space-y-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-slate-100 text-slate-700">
+                        {internship.internship_type}
+                      </span>
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                        internship.status === 'Completed'
+                          ? 'bg-emerald-50 text-emerald-700'
+                          : 'bg-amber-50 text-amber-700'
+                      }`}>
+                        {internship.status}
+                      </span>
+                      <h3 className="text-sm font-bold text-slate-900 truncate group-hover:text-amber-700 transition-colors">
+                        {internship.title}
+                      </h3>
+                    </div>
+                    <div className="flex items-center gap-3 text-xs text-slate-500 flex-wrap">
+                      <span className="flex items-center gap-1 font-medium text-slate-700">
+                        <Building2 className="w-3.5 h-3.5 text-slate-400" />
+                        {internship.organization}
+                      </span>
+                      <span>•</span>
+                      <span className="flex items-center gap-1">
+                        <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                        {internship.start_date} → {internship.status === 'Ongoing' ? 'Present' : internship.end_date || 'N/A'}
+                      </span>
+                      {internship.location_type && (
+                        <>
+                          <span>•</span>
+                          <span>{internship.location_type}</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3 shrink-0">
+                    <span className="text-xs font-bold text-amber-700 group-hover:underline">
+                      View Details
+                    </span>
+                    <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
                   </div>
                 </div>
               ))}

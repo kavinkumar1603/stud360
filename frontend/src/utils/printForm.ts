@@ -274,12 +274,12 @@ export function printODForm(data: any) {
     doc.open();
     doc.write(html);
     doc.close();
-    
+
     // Wait for image/DOM to load before printing
     setTimeout(() => {
       iframe.contentWindow?.focus();
       iframe.contentWindow?.print();
-      
+
       // Cleanup after print dialog opens
       setTimeout(() => {
         document.body.removeChild(iframe);

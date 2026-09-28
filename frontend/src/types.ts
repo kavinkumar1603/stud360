@@ -4,6 +4,7 @@ export type AcademicYear = string;
 export type Semester = string;
 
 export type ODRequestType = 'Individual' | 'Team';
+export type ODCategory = 'Internal' | 'External';
 
 export type AdvisorStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
 export type ODFinalStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
@@ -33,6 +34,7 @@ export interface ODRequest {
   to_date: string;
   number_of_days?: number;
   request_type: ODRequestType;
+  od_category?: ODCategory;
   event_category?: string;
   location?: string;
   mentor_name?: string;
@@ -137,6 +139,13 @@ export interface Mentor {
 export interface Internship {
   id: string;
   student_id: string;
+  student_name?: string;
+  student_roll?: string;
+  student_dept?: string;
+  student_section?: string;
+  student_avatar?: string;
+  student_advisor_id?: string;
+  student_tutor_id?: string;
   internship_type: InternshipType;
   status: InternshipStatus;
   title: string;

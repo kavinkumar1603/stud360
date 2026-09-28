@@ -2,10 +2,10 @@
 
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import { ODRequestType, Student } from '../../types';
+import { ODRequestType, ODCategory, Student } from '../../types';
 import { isValidDateRange } from '../../utils/validation';
 import { printODForm } from '../../utils/printForm';
-import { Users, User, X, Search, AlertCircle, FileText, CheckCircle } from 'lucide-react';
+import { Users, User, X, Search, AlertCircle, FileText, CheckCircle, Building2, Globe } from 'lucide-react';
 
 interface ApplyODModalProps {
   isOpen: boolean;
@@ -16,6 +16,7 @@ interface ApplyODModalProps {
 export const ApplyODModal: React.FC<ApplyODModalProps> = ({ isOpen, onClose, onSubmitted }) => {
   const { currentStudent, students, addODRequest } = useApp();
 
+  const [odCategory, setOdCategory] = useState<ODCategory>('Internal');
   const [requestType, setRequestType] = useState<ODRequestType>('Individual');
   const [eventName, setEventName] = useState('');
   const [venue, setVenue] = useState('');
@@ -95,7 +96,9 @@ export const ApplyODModal: React.FC<ApplyODModalProps> = ({ isOpen, onClose, onS
       mentorDesignation: mentorDesignation,
       eventName: eventName,
       venue: venue,
-      contactNumber: contactNumber
+      contactNumber: contactNumber,
+      odCategory: odCategory,
+      requestType: requestType
     });
   };
 
@@ -103,7 +106,7 @@ export const ApplyODModal: React.FC<ApplyODModalProps> = ({ isOpen, onClose, onS
     e.preventDefault();
     if (!isSubmitEnabled) return;
 
-    const fullDescription = `Venue: ${venue}\nMentor: ${mentorName} (${mentorDesignation})\nContact: ${contactNumber}\nEvent Link: ${hackathonLink || 'N/A'}\n\nDetails: ${description.trim()}`;
+    const fullDescription = `OD Scope: ${odCategory} OD\nVenue: ${venue}\nMentor: ${mentorName} (${mentorDesignation})\nContact: ${contactNumber}\nEvent Link: ${hackathonLink || 'N/A'}\n\nDetails: ${description.trim()}`;
     
     addODRequest({
       event_name: eventName.trim(),
@@ -111,6 +114,7 @@ export const ApplyODModal: React.FC<ApplyODModalProps> = ({ isOpen, onClose, onS
       from_date: fromDate,
       to_date: toDate,
       request_type: requestType,
+      od_category: odCategory,
       team_members: selectedTeamMembers.map((m) => ({
         student_id: m.id,
         roll_no: m.roll_no,
@@ -130,6 +134,7 @@ export const ApplyODModal: React.FC<ApplyODModalProps> = ({ isOpen, onClose, onS
     setToDate('');
     setSelectedTeamMembers([]);
     setRequestType('Individual');
+    setOdCategory('Internal');
 
     onClose();
     if (onSubmitted) onSubmitted();
@@ -164,22 +169,87 @@ export const ApplyODModal: React.FC<ApplyODModalProps> = ({ isOpen, onClose, onS
             
             <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-6">
               
+              {/* OD Category & Scope */}
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">OD Type <span className="text-red-500">*</span></label>
-                <div className="flex bg-slate-100 p-1 rounded-lg max-w-md">
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                  OD Category & Scope <span className="text-red-500">*</span>
+                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-xl">
                   <button
                     type="button"
-                    onClick={() => setRequestType('Individual')}
-                    className={`flex-1 py-2 flex justify-center items-center gap-2 text-sm font-bold rounded-md transition-all ${requestType === 'Individual' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                    id="btn-od-scope-internal"
+                    onClick={() => setOdCategory('Internal')}
+                    className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col gap-1.5 ${
+                      odCategory === 'Internal'
+                        ? 'bg-blue-50/70 border-blue-500 text-blue-900 shadow-xs ring-1 ring-blue-500/20'
+                        : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50'
+                    }`}
                   >
-                    <User className="w-4 h-4" /> Individual
+                    <div className="flex items-center gap-2 font-bold text-xs">
+                      <Building2 className={`w-4 h-4 ${odCategory === 'Internal' ? 'text-blue-600' : 'text-slate-400'}`} />
+                      <span className="text-sm">Internal OD</span>
+                      {odCategory === 'Internal' && (
+                        <span className="ml-auto px-2 py-0.5 rounded text-[10px] font-bold bg-blue-600 text-white">Selected</span>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-slate-500 leading-snug">
+                      On-campus events, college symposiums, club activities, lab duty, or department events.
+                    </p>
+                  </button>
+
+                  <button
+                    type="button"
+                    id="btn-od-scope-external"
+                    onClick={() => setOdCategory('External')}
+                    className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col gap-1.5 ${
+                      odCategory === 'External'
+                        ? 'bg-purple-50/70 border-purple-500 text-purple-900 shadow-xs ring-1 ring-purple-500/20'
+                        : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 font-bold text-xs">
+                      <Globe className={`w-4 h-4 ${odCategory === 'External' ? 'text-purple-600' : 'text-slate-400'}`} />
+                      <span className="text-sm">External OD</span>
+                      {odCategory === 'External' && (
+                        <span className="ml-auto px-2 py-0.5 rounded text-[10px] font-bold bg-purple-600 text-white">Selected</span>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-slate-500 leading-snug">
+                      Off-campus events, inter-college hackathons, external conferences, paper presentations & competitions.
+                    </p>
+                  </button>
+                </div>
+              </div>
+
+              {/* Participation Type */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                  Participation Type <span className="text-red-500">*</span>
+                </label>
+                <div className="flex bg-slate-100 p-1 rounded-xl max-w-sm">
+                  <button
+                    type="button"
+                    id="btn-od-type-individual"
+                    onClick={() => setRequestType('Individual')}
+                    className={`flex-1 py-2 flex justify-center items-center gap-2 text-xs font-bold rounded-lg transition-all ${
+                      requestType === 'Individual'
+                        ? 'bg-white text-blue-600 shadow-xs'
+                        : 'text-slate-500 hover:text-slate-700'
+                    }`}
+                  >
+                    <User className="w-3.5 h-3.5" /> Individual
                   </button>
                   <button
                     type="button"
+                    id="btn-od-type-team"
                     onClick={() => setRequestType('Team')}
-                    className={`flex-1 py-2 flex justify-center items-center gap-2 text-sm font-bold rounded-md transition-all ${requestType === 'Team' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                    className={`flex-1 py-2 flex justify-center items-center gap-2 text-xs font-bold rounded-lg transition-all ${
+                      requestType === 'Team'
+                        ? 'bg-white text-blue-600 shadow-xs'
+                        : 'text-slate-500 hover:text-slate-700'
+                    }`}
                   >
-                    <Users className="w-4 h-4" /> Team
+                    <Users className="w-3.5 h-3.5" /> Team
                   </button>
                 </div>
               </div>
@@ -191,7 +261,7 @@ export const ApplyODModal: React.FC<ApplyODModalProps> = ({ isOpen, onClose, onS
                   required
                   value={eventName}
                   onChange={(e) => setEventName(e.target.value)}
-                  placeholder="e.g. Smart India Hackathon 2026 or IEEE Conference"
+                  placeholder={odCategory === 'Internal' ? 'e.g. National Science Day Expo / College Symposium' : 'e.g. Smart India Hackathon 2026 / IEEE Conference'}
                   className="w-full px-4 py-2.5 bg-white border border-slate-300 text-slate-900 rounded-lg text-sm focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 outline-none"
                 />
               </div>
@@ -226,7 +296,7 @@ export const ApplyODModal: React.FC<ApplyODModalProps> = ({ isOpen, onClose, onS
                     required
                     value={venue}
                     onChange={(e) => setVenue(e.target.value)}
-                    placeholder="Event Location"
+                    placeholder={odCategory === 'Internal' ? 'e.g. Mech Seminar Hall / Campus Auditorium / Lab 4' : 'e.g. IIT Madras / PSG Tech Coimbatore / MIT'}
                     className="w-full px-4 py-2.5 bg-white border border-slate-300 text-slate-900 rounded-lg text-sm focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 outline-none"
                   />
                 </div>

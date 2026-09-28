@@ -2,23 +2,25 @@
 
 import React from 'react';
 import { useApp } from '../../context/AppContext';
-import { Clock, FileText, Briefcase, AlertCircle, ChevronRight, User, CheckCircle2, Users, FileCheck } from 'lucide-react';
+import { Clock, FileText, Briefcase, AlertCircle, ChevronRight, User, CheckCircle2, Users, FileCheck, Building2 } from 'lucide-react';
 import { format } from 'date-fns';
-import { ODRequest, LeaveApplication } from '@/types';
+import { ODRequest, LeaveApplication, Internship } from '@/types';
 import { formatDateRange } from '../../utils/validation';
 
 interface AdvisorDashboardViewProps {
   onSelectODRequest: (od: ODRequest) => void;
   onSelectLeaveRequest?: (l: LeaveApplication) => void;
-  onNavigateTab: (tab: 'requests' | 'all_requests' | 'students' | 'leaves' | 'all_leaves') => void;
+  onSelectInternship?: (internship: Internship) => void;
+  onNavigateTab: (tab: 'requests' | 'all_requests' | 'students' | 'leaves' | 'all_leaves' | 'internships') => void;
 }
 
 export const AdvisorDashboardView: React.FC<AdvisorDashboardViewProps> = ({
   onSelectODRequest,
   onSelectLeaveRequest,
+  onSelectInternship,
   onNavigateTab
 }) => {
-  const { currentAdvisor, students, advisors, odRequests, leaveApplications, academicYear, semester } = useApp();
+  const { currentAdvisor, students, advisors, odRequests, leaveApplications, internships, academicYear, semester } = useApp();
 
   const isTutor = currentAdvisor?.title === 'tutor';
 
@@ -87,6 +89,18 @@ export const AdvisorDashboardView: React.FC<AdvisorDashboardViewProps> = ({
     return isTutor ? l.tutor_status === 'PENDING' : l.advisor_status === 'PENDING';
   });
 
+  // INTERNSHIPS METRICS
+  const isCohortInternship = (internship: Internship) => {
+    if (!currentAdvisor) return true;
+    if (internship.student_advisor_id === currentAdvisor.id || internship.student_tutor_id === currentAdvisor.id) return true;
+    if (isBatchStudent(internship.student_id, internship.student_roll)) return true;
+    if (students.some(s => s.id === internship.student_id && (s.advisor_id === currentAdvisor.id || s.tutor_id === currentAdvisor.id))) return true;
+    return false;
+  };
+  const cohortInternships = (internships || []).filter(isCohortInternship);
+  const ongoingInternships = cohortInternships.filter(i => i.status === 'Ongoing');
+  const completedInternships = cohortInternships.filter(i => i.status === 'Completed');
+
   return (
     <div className="space-y-6 max-w-6xl mx-auto pb-24">
       {/* Header */}
@@ -100,9 +114,9 @@ export const AdvisorDashboardView: React.FC<AdvisorDashboardViewProps> = ({
       </div>
 
       {/* Metrics Grid */}
-      <div className={`grid grid-cols-1 ${isTutor ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-6`}>
+      <div className={`grid grid-cols-1 ${isTutor ? 'sm:grid-cols-2 lg:grid-cols-4' : 'sm:grid-cols-2 lg:grid-cols-3'} gap-6`}>
         {/* Card 1: Pending Action */}
-        <div 
+        <div
           onClick={() => onNavigateTab(isTutor ? 'leaves' : 'requests')}
           className="bg-gradient-to-br from-amber-50 to-orange-50/50 border border-amber-100 rounded-2xl p-6 shadow-sm flex flex-col justify-between gap-6 cursor-pointer hover:shadow-md transition-all group"
         >
@@ -125,7 +139,7 @@ export const AdvisorDashboardView: React.FC<AdvisorDashboardViewProps> = ({
 
         {/* For Tutor: Card 2: OD Applications */}
         {isTutor && (
-          <div 
+          <div
             onClick={() => onNavigateTab('requests')}
             className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex flex-col justify-between gap-6 cursor-pointer hover:shadow-md transition-all group"
           >
@@ -148,7 +162,7 @@ export const AdvisorDashboardView: React.FC<AdvisorDashboardViewProps> = ({
         )}
 
         {/* Card: Total Applications */}
-        <div 
+        <div
           onClick={() => onNavigateTab(isTutor ? 'all_leaves' : 'all_requests')}
           className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex flex-col justify-between gap-6 cursor-pointer hover:shadow-md transition-all group"
         >
@@ -168,6 +182,30 @@ export const AdvisorDashboardView: React.FC<AdvisorDashboardViewProps> = ({
             <span className="text-xs font-semibold text-slate-500 block mt-1">All-time (Till Date)</span>
           </div>
         </div>
+
+        {/* Card: Student Internships */}
+        <div
+          onClick={() => onNavigateTab('internships')}
+          className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex flex-col justify-between gap-6 cursor-pointer hover:shadow-md transition-all group"
+        >
+          <div className="flex items-start justify-between">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-amber-700">
+                <Briefcase className="w-5 h-5" />
+                <h2 className="text-sm font-bold uppercase tracking-wider">Internships</h2>
+              </div>
+            </div>
+            <div className="w-8 h-8 rounded-full bg-amber-50 flex items-center justify-center shadow-xs text-amber-600 group-hover:scale-110 transition-transform">
+              <ChevronRight className="w-4 h-4" />
+            </div>
+          </div>
+          <div>
+            <span className="text-4xl font-black text-slate-900">{cohortInternships.length}</span>
+            <span className="text-xs font-semibold text-slate-500 block mt-1">
+              {ongoingInternships.length} Ongoing • {completedInternships.length} Completed
+            </span>
+          </div>
+        </div>
       </div>
 
       {/* Quick Action: Recent Pending */}
@@ -177,14 +215,14 @@ export const AdvisorDashboardView: React.FC<AdvisorDashboardViewProps> = ({
             <AlertCircle className="w-4 h-4 text-amber-500" />
             <h2 className="text-sm font-bold text-slate-900">Recent Pending {isTutor ? 'Leaves' : 'Requests'}</h2>
           </div>
-          <button 
+          <button
             onClick={() => onNavigateTab(isTutor ? 'leaves' : 'requests')}
             className="text-xs font-bold text-blue-600 hover:text-blue-700"
           >
             View All
           </button>
         </div>
-        
+
         <div className="divide-y divide-slate-100">
           {(isTutor ? pendingLeaves : pendingODs).length === 0 ? (
             <div className="p-8 text-center text-slate-500 text-sm font-medium">
@@ -194,8 +232,8 @@ export const AdvisorDashboardView: React.FC<AdvisorDashboardViewProps> = ({
             (isTutor ? pendingLeaves : pendingODs).slice(0, 5).map(req => {
               const student = students.find(s => s.id === req.student_id);
               return (
-                <div 
-                  key={req.id} 
+                <div
+                  key={req.id}
                   onClick={() => {
                     if (isTutor || 'leave_type' in req) {
                       onSelectLeaveRequest?.(req as LeaveApplication);
@@ -214,8 +252,8 @@ export const AdvisorDashboardView: React.FC<AdvisorDashboardViewProps> = ({
                         {student?.name || (req as LeaveApplication).student_name || 'Unknown Student'}
                       </p>
                       <p className="text-xs font-semibold text-slate-500 mt-0.5">
-                        {isTutor || 'leave_type' in req 
-                          ? `${(req as LeaveApplication).leave_type} Leave ${getTutorName(req as LeaveApplication) ? `• Tutor: ${getTutorName(req as LeaveApplication)}` : ''}` 
+                        {isTutor || 'leave_type' in req
+                          ? `${(req as LeaveApplication).leave_type} Leave ${getTutorName(req as LeaveApplication) ? `• Tutor: ${getTutorName(req as LeaveApplication)}` : ''}`
                           : (req as ODRequest).event_category || (req as ODRequest).request_type}
                       </p>
                     </div>
@@ -246,14 +284,14 @@ export const AdvisorDashboardView: React.FC<AdvisorDashboardViewProps> = ({
                 <p className="text-[11px] text-slate-500 font-medium">View all On-Duty applications across the cohort</p>
               </div>
             </div>
-            <button 
+            <button
               onClick={() => onNavigateTab('requests')}
               className="text-xs font-bold text-blue-600 hover:text-blue-700 cursor-pointer"
             >
               View All ({cohortODs.length})
             </button>
           </div>
-          
+
           <div className="divide-y divide-slate-100">
             {cohortODs.length === 0 ? (
               <div className="p-8 text-center text-slate-500 text-sm font-medium">
@@ -261,8 +299,8 @@ export const AdvisorDashboardView: React.FC<AdvisorDashboardViewProps> = ({
               </div>
             ) : (
               cohortODs.slice(0, 5).map(od => (
-                <div 
-                  key={od.id} 
+                <div
+                  key={od.id}
                   onClick={() => onSelectODRequest(od)}
                   className="p-4 hover:bg-slate-50 transition-colors cursor-pointer flex items-center justify-between group"
                 >
@@ -275,9 +313,8 @@ export const AdvisorDashboardView: React.FC<AdvisorDashboardViewProps> = ({
                         <p className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
                           {od.student_name} ({od.student_roll})
                         </p>
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                          od.request_type === 'Team' ? 'bg-purple-100 text-purple-700' : 'bg-slate-100 text-slate-600'
-                        }`}>
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${od.request_type === 'Team' ? 'bg-purple-100 text-purple-700' : 'bg-slate-100 text-slate-600'
+                          }`}>
                           {od.request_type}
                         </span>
                       </div>
@@ -287,11 +324,10 @@ export const AdvisorDashboardView: React.FC<AdvisorDashboardViewProps> = ({
                     </div>
                   </div>
                   <div className="text-right shrink-0">
-                    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black tracking-wider uppercase border ${
-                      od.advisor_status === 'APPROVED' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                      od.advisor_status === 'REJECTED' ? 'bg-rose-50 text-rose-700 border-rose-200' :
-                      'bg-amber-50 text-amber-700 border-amber-200'
-                    }`}>
+                    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black tracking-wider uppercase border ${od.advisor_status === 'APPROVED' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                        od.advisor_status === 'REJECTED' ? 'bg-rose-50 text-rose-700 border-rose-200' :
+                          'bg-amber-50 text-amber-700 border-amber-200'
+                      }`}>
                       {od.advisor_status === 'APPROVED' && <CheckCircle2 className="w-3 h-3" />}
                       {od.advisor_status}
                     </span>
@@ -313,14 +349,14 @@ export const AdvisorDashboardView: React.FC<AdvisorDashboardViewProps> = ({
             {isTutor ? <Briefcase className="w-4 h-4 text-blue-500" /> : <FileText className="w-4 h-4 text-blue-500" />}
             <h2 className="text-sm font-bold text-slate-900">Recent {isTutor ? 'Leave' : 'OD'} Applications</h2>
           </div>
-          <button 
+          <button
             onClick={() => onNavigateTab(isTutor ? 'all_leaves' : 'all_requests')}
             className="text-xs font-bold text-blue-600 hover:text-blue-700"
           >
             View All
           </button>
         </div>
-        
+
         <div className="divide-y divide-slate-100">
           {(isTutor ? cohortLeaves : cohortODs).length === 0 ? (
             <div className="p-8 text-center text-slate-500 text-sm font-medium">
@@ -329,14 +365,14 @@ export const AdvisorDashboardView: React.FC<AdvisorDashboardViewProps> = ({
           ) : (
             (isTutor ? cohortLeaves : cohortODs).slice(0, 5).map(req => {
               const student = students.find(s => s.id === req.student_id);
-              const status = isTutor || 'leave_type' in req 
-                ? (((req as LeaveApplication).tutor_status === 'APPROVED' || (req as LeaveApplication).advisor_status === 'APPROVED') 
-                    ? 'APPROVED' 
-                    : (isTutor ? (req as LeaveApplication).tutor_status : (req as LeaveApplication).advisor_status))
+              const status = isTutor || 'leave_type' in req
+                ? (((req as LeaveApplication).tutor_status === 'APPROVED' || (req as LeaveApplication).advisor_status === 'APPROVED')
+                  ? 'APPROVED'
+                  : (isTutor ? (req as LeaveApplication).tutor_status : (req as LeaveApplication).advisor_status))
                 : (req as ODRequest).advisor_status;
               return (
-                <div 
-                  key={req.id} 
+                <div
+                  key={req.id}
                   onClick={() => {
                     if (isTutor || 'leave_type' in req) {
                       onSelectLeaveRequest?.(req as LeaveApplication);
@@ -355,22 +391,93 @@ export const AdvisorDashboardView: React.FC<AdvisorDashboardViewProps> = ({
                         {student?.name || (req as LeaveApplication).student_name || 'Unknown Student'}
                       </p>
                       <p className="text-xs font-semibold text-slate-500 mt-0.5">
-                        {isTutor || 'leave_type' in req 
-                          ? `${(req as LeaveApplication).leave_type} Leave ${getTutorName(req as LeaveApplication) ? `• Tutor: ${getTutorName(req as LeaveApplication)}` : ''}` 
+                        {isTutor || 'leave_type' in req
+                          ? `${(req as LeaveApplication).leave_type} Leave ${getTutorName(req as LeaveApplication) ? `• Tutor: ${getTutorName(req as LeaveApplication)}` : ''}`
                           : (req as ODRequest).event_category || (req as ODRequest).request_type}
                       </p>
                     </div>
                   </div>
                   <div className="text-right shrink-0">
-                    <span className={`px-2.5 py-1 border rounded-full text-[10px] font-black tracking-wider uppercase ${
-                      status === 'APPROVED' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                      status === 'REJECTED' ? 'bg-red-50 text-red-700 border-red-200' :
-                      'bg-amber-50 text-amber-700 border-amber-200'
-                    }`}>
+                    <span className={`px-2.5 py-1 border rounded-full text-[10px] font-black tracking-wider uppercase ${status === 'APPROVED' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                        status === 'REJECTED' ? 'bg-red-50 text-red-700 border-red-200' :
+                          'bg-amber-50 text-amber-700 border-amber-200'
+                      }`}>
                       {status || 'PENDING'}
                     </span>
                     <p className="text-[11px] font-semibold text-slate-400 mt-2">
                       {format(new Date(req.created_at), 'MMM d, yyyy')}
+                    </p>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      </div>
+
+      {/* Quick Action: Recent Student Internships */}
+      <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+        <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+          <div className="flex items-center gap-2">
+            <Briefcase className="w-4 h-4 text-amber-600" />
+            <div>
+              <h2 className="text-sm font-bold text-slate-900">Recent Student Internships</h2>
+              <p className="text-[11px] text-slate-500 font-medium">Latest professional industry & internal internships in your cohort</p>
+            </div>
+          </div>
+          <button
+            onClick={() => onNavigateTab('internships')}
+            className="text-xs font-bold text-amber-700 hover:text-amber-800 cursor-pointer"
+          >
+            View All ({cohortInternships.length})
+          </button>
+        </div>
+
+        <div className="divide-y divide-slate-100">
+          {cohortInternships.length === 0 ? (
+            <div className="p-8 text-center text-slate-500 text-sm font-medium">
+              No student internships logged yet for your cohort.
+            </div>
+          ) : (
+            cohortInternships.slice(0, 5).map(item => {
+              const student = students.find(s => s.id === item.student_id);
+              const studentName = item.student_name || student?.name || 'Unknown Student';
+              const studentRoll = item.student_roll || student?.roll_no || '';
+
+              return (
+                <div
+                  key={item.id}
+                  onClick={() => onSelectInternship ? onSelectInternship(item) : onNavigateTab('internships')}
+                  className="p-4 hover:bg-slate-50 transition-colors cursor-pointer flex items-center justify-between group"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
+                      <Briefcase className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="text-sm font-bold text-slate-900 group-hover:text-amber-700 transition-colors">
+                          {studentName} {studentRoll ? `(${studentRoll})` : ''}
+                        </p>
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-600">
+                          {item.internship_type}
+                        </span>
+                      </div>
+                      <p className="text-xs font-semibold text-slate-600 mt-0.5">
+                        {item.title} • <span className="text-slate-500 font-normal">{item.organization}</span>
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <span className={`px-2.5 py-1 border rounded-full text-[10px] font-black tracking-wider uppercase ${
+                      item.status === 'Completed'
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                        : 'bg-amber-50 text-amber-700 border-amber-200'
+                    }`}>
+                      {item.status}
+                    </span>
+                    <p className="text-[11px] font-semibold text-slate-400 mt-2">
+                      {item.start_date}
                     </p>
                   </div>
                 </div>

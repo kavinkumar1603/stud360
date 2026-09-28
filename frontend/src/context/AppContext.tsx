@@ -7,6 +7,7 @@ import {
   AdvisorStatus,
   ODRequest,
   ODRequestType,
+  ODCategory,
   ProofStatus,
   Semester,
   Student,
@@ -57,8 +58,9 @@ interface AppContextType {
     from_date: string;
     to_date: string;
     request_type: ODRequestType;
+    od_category?: ODCategory;
     team_members: Array<{ student_id: string; roll_no: string; name: string }>;
-  }) => void;
+  }) => Promise<void>;
   updateODRequestProof: (odId: string, driveLink: string, remarks?: string) => Promise<void>;
   advisorReviewOD: (odId: string, status: AdvisorStatus, remarks?: string) => Promise<void>;
   advisorVerifyProof: (odId: string, memberStudentId: string, newStatus: 'VERIFIED' | 'REJECTED') => Promise<void>;
@@ -142,7 +144,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (data.odRequests) {
           const mapped = data.odRequests.map((od: any) => ({
             ...od,
-            academic_year: od.academic_year === '2024-2025' ? '2026-2027' : od.academic_year
+            academic_year: od.academic_year === '2024-2025' ? '2026-2027' : od.academic_year,
+            od_category: od.od_category || (od.description && od.description.includes('OD Scope: Internal OD') ? 'Internal' : 'External')
           }));
           setOdRequests(mapped);
         }
@@ -230,6 +233,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     from_date: string;
     to_date: string;
     request_type: ODRequestType;
+    od_category?: ODCategory;
     team_members: Array<{ student_id: string; roll_no: string; name: string }>;
   }) => {
     if (!currentStudent.id) return;
@@ -246,6 +250,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       from_date: data.from_date,
       to_date: data.to_date,
       request_type: data.request_type,
+      od_category: data.od_category || 'External',
       team_members: data.team_members.map((m) => ({
         ...m,
         individual_proof_status: 'LOCKED'
@@ -270,6 +275,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       // Map it back for the frontend state
       if (inserted.academic_year === '2024-2025') {
         inserted.academic_year = '2026-2027';
+      }
+      if (!inserted.od_category) {
+        inserted.od_category = data.od_category || 'External';
       }
       
       setOdRequests((prev) => [inserted, ...prev]);

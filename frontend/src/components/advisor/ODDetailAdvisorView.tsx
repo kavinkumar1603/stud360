@@ -16,7 +16,9 @@ import {
   ShieldCheck,
   CheckCircle2,
   Clock,
-  Trash2
+  Trash2,
+  Building2,
+  Globe
 } from 'lucide-react';
 
 interface ODDetailAdvisorViewProps {
@@ -101,6 +103,18 @@ export const ODDetailAdvisorView: React.FC<ODDetailAdvisorViewProps> = ({ odRequ
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 pb-5 border-b border-slate-100">
           <div className="space-y-2">
             <div className="flex items-center gap-2 flex-wrap">
+              {(currentOD.od_category || 'External') === 'Internal' ? (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-xs font-bold uppercase bg-indigo-50 text-indigo-700 border border-indigo-200">
+                  <Building2 className="w-3.5 h-3.5" /> Internal OD
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-xs font-bold uppercase bg-purple-50 text-purple-700 border border-purple-200">
+                  <Globe className="w-3.5 h-3.5" /> External OD
+                </span>
+              )}
+              <span className="px-2.5 py-0.5 rounded text-xs font-bold uppercase bg-blue-50 text-blue-700 border border-blue-200">
+                {currentOD.request_type} OD
+              </span>
               <span className={`px-2.5 py-0.5 rounded text-xs font-bold uppercase ${
                 isTutor 
                   ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
@@ -121,13 +135,32 @@ export const ODDetailAdvisorView: React.FC<ODDetailAdvisorViewProps> = ({ odRequ
         </div>
 
         {/* Info Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100">
             <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">
               Student Requester
             </span>
             <div className="text-sm font-bold text-slate-900">
               {currentOD.student_name} ({currentOD.student_roll})
+            </div>
+          </div>
+
+          <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100">
+            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">
+              OD Scope
+            </span>
+            <div className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+              {(currentOD.od_category || 'External') === 'Internal' ? (
+                <>
+                  <Building2 className="w-4 h-4 text-indigo-600" />
+                  <span>Internal (On Campus)</span>
+                </>
+              ) : (
+                <>
+                  <Globe className="w-4 h-4 text-purple-600" />
+                  <span>External (Off Campus)</span>
+                </>
+              )}
             </div>
           </div>
 

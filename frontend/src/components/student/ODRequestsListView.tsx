@@ -15,7 +15,9 @@ import {
   Clock,
   XCircle,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Building2,
+  Globe
 } from 'lucide-react';
 
 interface ODRequestsListViewProps {
@@ -30,6 +32,7 @@ export const ODRequestsListView: React.FC<ODRequestsListViewProps> = ({
   const { currentStudent, academicYear: globalAY, semester: globalSem, odRequests } = useApp();
 
   const [activeTabFilter, setActiveTabFilter] = useState<'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED'>('ALL');
+  const [categoryFilter, setCategoryFilter] = useState<'ALL' | 'Internal' | 'External'>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedAY, setSelectedAY] = useState<string>('2026-2027');
   const [selectedSem, setSelectedSem] = useState<string>('Semester 5');
@@ -48,7 +51,13 @@ export const ODRequestsListView: React.FC<ODRequestsListViewProps> = ({
       const matchCategory = od.event_category?.toLowerCase().includes(q);
       const matchLoc = od.location?.toLowerCase().includes(q);
       const matchId = od.id.toLowerCase().includes(q);
-      if (!matchName && !matchCategory && !matchLoc && !matchId) return false;
+      const matchScope = (od.od_category || '').toLowerCase().includes(q);
+      if (!matchName && !matchCategory && !matchLoc && !matchId && !matchScope) return false;
+    }
+
+    if (categoryFilter !== 'ALL') {
+      const scope = od.od_category || 'External';
+      if (scope !== categoryFilter) return false;
     }
 
     if (activeTabFilter !== 'ALL') {
@@ -62,6 +71,8 @@ export const ODRequestsListView: React.FC<ODRequestsListViewProps> = ({
   const countPending = myODs.filter((od) => od.advisor_status === 'PENDING').length;
   const countApproved = myODs.filter((od) => od.advisor_status === 'APPROVED').length;
   const countRejected = myODs.filter((od) => od.advisor_status === 'REJECTED').length;
+  const countInternal = myODs.filter((od) => (od.od_category || 'External') === 'Internal').length;
+  const countExternal = myODs.filter((od) => (od.od_category || 'External') === 'External').length;
 
   // Render Type Icon based on Category
   const renderCategoryIcon = (category?: string) => {
@@ -212,6 +223,35 @@ export const ODRequestsListView: React.FC<ODRequestsListViewProps> = ({
           >
             Rejected ({countRejected})
           </button>
+
+          <div className="h-4 w-px bg-slate-300 mx-1 hidden sm:block"></div>
+
+          {/* Scope Filters */}
+          <button
+            id="filter-scope-internal"
+            onClick={() => setCategoryFilter(categoryFilter === 'Internal' ? 'ALL' : 'Internal')}
+            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 ${
+              categoryFilter === 'Internal'
+                ? 'bg-indigo-600 text-white shadow-xs'
+                : 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200'
+            }`}
+          >
+            <Building2 className="w-3 h-3" />
+            Internal ({countInternal})
+          </button>
+
+          <button
+            id="filter-scope-external"
+            onClick={() => setCategoryFilter(categoryFilter === 'External' ? 'ALL' : 'External')}
+            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 ${
+              categoryFilter === 'External'
+                ? 'bg-purple-600 text-white shadow-xs'
+                : 'bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200'
+            }`}
+          >
+            <Globe className="w-3 h-3" />
+            External ({countExternal})
+          </button>
         </div>
       </div>
 
@@ -259,7 +299,21 @@ export const ODRequestsListView: React.FC<ODRequestsListViewProps> = ({
 
                       {/* EVENT DETAILS */}
                       <td className="py-4 px-6">
-                        <div className="font-bold text-slate-900 text-xs">{od.event_name}</div>
+                        <div className="flex items-center gap-2 flex-wrap mb-1">
+                          <span className="font-bold text-slate-900 text-xs">{od.event_name}</span>
+                          {(od.od_category || 'External') === 'Internal' ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                              <Building2 className="w-2.5 h-2.5" /> Internal OD
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200">
+                              <Globe className="w-2.5 h-2.5" /> External OD
+                            </span>
+                          )}
+                          <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-600">
+                            {od.request_type}
+                          </span>
+                        </div>
                         <div className="text-[11px] text-slate-400 mt-0.5">
                           {reqCode} • {od.event_category || 'Academic Event'}
                         </div>

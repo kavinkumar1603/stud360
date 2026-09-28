@@ -31,6 +31,7 @@ export type NavTab =
   | 'advisor_requests'
   | 'advisor_leaves'
   | 'advisor_proofs'
+  | 'advisor_internships'
   | 'advisor_profile';
 
 interface SidebarLayoutProps {
@@ -59,6 +60,7 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({
     advisors,
     odRequests,
     leaveApplications,
+    internships,
     resetToDefaultData
   } = useApp();
 
@@ -99,6 +101,16 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({
       return false;
     }
   ).length;
+
+  const isCohortInternship = (internship: any) => {
+    if (!currentAdvisor) return false;
+    if (internship.student_advisor_id === currentAdvisor.id || internship.student_tutor_id === currentAdvisor.id) return true;
+    if (isBatchStudent(internship.student_id, internship.student_roll)) return true;
+    if (students.some(s => s.id === internship.student_id && (s.advisor_id === currentAdvisor.id || s.tutor_id === currentAdvisor.id))) return true;
+    return false;
+  };
+  const cohortInternships = (internships || []).filter(isCohortInternship);
+  const activeInternshipsCount = cohortInternships.length;
 
   const handleNavClick = (tab: NavTab) => {
     setActiveTab(tab);
@@ -336,6 +348,28 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({
               >
                 <FileText className={`w-4 h-4 ${activeTab === 'advisor_proofs' ? 'text-white' : 'text-amber-500'}`} />
                 <span>Proof Submissions</span>
+              </button>
+
+              <button
+                id="nav-advisor-internships"
+                onClick={() => handleNavClick('advisor_internships')}
+                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                  activeTab === 'advisor_internships'
+                    ? 'bg-amber-600 text-white shadow-sm font-bold'
+                    : 'text-slate-600 hover:bg-amber-50 hover:text-amber-900'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <Briefcase className={`w-4 h-4 ${activeTab === 'advisor_internships' ? 'text-white' : 'text-amber-500'}`} />
+                  <span>Student Internships</span>
+                </div>
+                {activeInternshipsCount > 0 && (
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                    activeTab === 'advisor_internships' ? 'bg-white text-amber-800' : 'bg-amber-100 text-amber-800'
+                  }`}>
+                    {activeInternshipsCount}
+                  </span>
+                )}
               </button>
 
               <button

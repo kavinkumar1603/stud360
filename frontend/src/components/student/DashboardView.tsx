@@ -23,7 +23,7 @@ interface DashboardViewProps {
   onOpenApplyOD: () => void;
   onOpenApplyLeave: () => void;
   onSelectODRequest: (od: ODRequest) => void;
-  onNavigateTab: (tab: 'requests' ) => void;
+  onNavigateTab: (tab: 'requests') => void;
 }
 
 export const DashboardView: React.FC<DashboardViewProps> = ({
@@ -32,12 +32,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onSelectODRequest,
   onNavigateTab
 }) => {
-  const { currentStudent, academicYear, semester, odRequests , advisors, deadlines } = useApp();
+  const { currentStudent, academicYear, semester, odRequests, advisors, deadlines } = useApp();
 
   const myAdvisor = advisors.find((a) => a.id === currentStudent.advisor_id);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  
+
   const myDeadlines = deadlines.filter((d) => {
     if (d.advisor_id !== currentStudent.advisor_id) return false;
     const dueDate = new Date(d.due_date);
@@ -59,7 +59,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
   return (
     <div className="space-y-6">
-      
+
       {/* Welcome Section */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
@@ -90,7 +90,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
       {/* Top 2-Column Summary Cards (Exact Layout from Image 4) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
+
         {/* Left 2-Cols: On-Duty (OD) Requests Card */}
         <div className="lg:col-span-2 bg-gradient-to-br from-blue-50/90 to-indigo-50/60 border border-blue-100 rounded-2xl p-6 shadow-xs flex flex-col justify-between gap-6">
           <div className="flex items-start justify-between gap-4">
@@ -104,12 +104,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               </p>
             </div>
 
-            
+
           </div>
 
           {/* 3 Status Stat Boxes */}
           <div className="grid grid-cols-3 gap-3">
-            
+
             <div className="bg-white/90 backdrop-blur-xs border border-slate-200/80 rounded-xl p-3.5 flex items-center justify-between">
               <div>
                 <span className="text-xs font-medium text-slate-500 block">Pending</span>
@@ -147,7 +147,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         <div className="bg-gradient-to-br from-indigo-50 via-white to-purple-50 border border-indigo-100 rounded-2xl p-6 shadow-sm relative overflow-hidden flex flex-col justify-center h-full group">
           {/* Decorative background flair */}
           <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 rounded-full blur-2xl -translate-y-10 translate-x-10 transition-transform duration-700 group-hover:scale-150"></div>
-          
+
           <div className="flex items-center gap-5 relative z-10">
             {/* Avatar on the Left */}
             <div className="w-20 h-20 shrink-0 rounded-full bg-white p-1 shadow-md border border-indigo-100">
@@ -185,7 +185,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
       {/* Bottom 2 Columns: Recent Activity & Upcoming Deadlines (Exact from Image 4) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
+
         {/* Recent Activity (Left 2 Columns) */}
         <div className="lg:col-span-2 bg-white border border-slate-200 rounded-2xl p-6 shadow-xs space-y-4">
           <div className="flex items-center justify-between pb-3 border-b border-slate-100">
@@ -246,7 +246,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   const date = new Date(dl.due_date);
                   const month = date.toLocaleString('default', { month: 'short' });
                   const day = date.getDate().toString().padStart(2, '0');
-                  
+
                   // Alternate colors for a dynamic look
                   const isRed = index % 2 === 0;
                   const bgClass = isRed ? 'bg-red-50/60' : 'bg-blue-50/60';
