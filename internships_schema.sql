@@ -1,9 +1,18 @@
--- Create Enum Types for Internships
-CREATE TYPE internship_type AS ENUM ('Internal', 'External');
-CREATE TYPE internship_status AS ENUM ('Ongoing', 'Completed');
+-- Create Enum Types for Internships (idempotent)
+DO $$ BEGIN
+    CREATE TYPE internship_type AS ENUM ('Internal', 'External');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+    CREATE TYPE internship_status AS ENUM ('Ongoing', 'Completed');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
 
 -- Create Internships Table
-CREATE TABLE public.internships (
+CREATE TABLE IF NOT EXISTS public.internships (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   student_id uuid REFERENCES public.students(id) ON DELETE CASCADE NOT NULL,
   internship_type internship_type NOT NULL,
@@ -27,5 +36,9 @@ CREATE TABLE public.internships (
 -- Set up Row Level Security (RLS)
 ALTER TABLE public.internships ENABLE ROW LEVEL SECURITY;
 
--- Create Policies (Allowing all for now since there's no real authentication yet)
-CREATE POLICY "Enable all access for all users" ON public.internships FOR ALL USING (true);
+-- Create Policy
+DO $$ BEGIN
+    CREATE POLICY "Enable all access for all users" ON public.internships FOR ALL USING (true);
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;

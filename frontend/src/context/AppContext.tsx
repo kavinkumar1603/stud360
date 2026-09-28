@@ -284,7 +284,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       addToast('Sent to your advisor for approval', 'success');
     } catch (error: any) {
       addToast(error.message || 'Error saving OD request', 'error');
-      console.error('An error occurred');
+      console.error('Error saving OD request:', error);
     }
   };
 
@@ -747,13 +747,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${sessionStorage.getItem('token')}` },
         body: JSON.stringify({ ...data, student_id: currentStudent.id })
       });
-      if (!res.ok) throw new Error('Failed to save internship');
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || 'Failed to save internship');
+      }
       const inserted = await res.json();
       setInternships(prev => [inserted, ...prev]);
       addToast('Internship added successfully', 'success');
-    } catch (error) {
-      addToast('Error adding internship', 'error');
-      console.error(error);
+    } catch (error: any) {
+      addToast(error.message || 'Error adding internship', 'error');
+      console.error('Error adding internship:', error);
     }
   };
 
@@ -764,13 +767,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${sessionStorage.getItem('token')}` },
         body: JSON.stringify(data)
       });
-      if (!res.ok) throw new Error('Failed to update internship');
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || 'Failed to update internship');
+      }
       const updated = await res.json();
       setInternships(prev => prev.map(i => i.id === id ? updated : i));
       addToast('Internship updated successfully', 'success');
-    } catch (error) {
-      addToast('Error updating internship', 'error');
-      console.error(error);
+    } catch (error: any) {
+      addToast(error.message || 'Error updating internship', 'error');
+      console.error('Error updating internship:', error);
     }
   };
 
@@ -780,12 +786,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${sessionStorage.getItem('token')}` }
       });
-      if (!res.ok) throw new Error('Failed to delete internship');
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || 'Failed to delete internship');
+      }
       setInternships(prev => prev.filter(i => i.id !== id));
       addToast('Internship deleted successfully', 'info');
-    } catch (error) {
-      addToast('Error deleting internship', 'error');
-      console.error(error);
+    } catch (error: any) {
+      addToast(error.message || 'Error deleting internship', 'error');
+      console.error('Error deleting internship:', error);
     }
   };
 

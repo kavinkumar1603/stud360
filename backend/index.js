@@ -433,8 +433,35 @@ app.delete('/api/classes/:id', authenticateToken, async (req, res) => {
 app.post('/api/od-requests', authenticateToken, async (req, res) => {
   try {
     let payload = { ...req.body };
+
+    // Auto-resolve advisor_id if missing but student_id is present
+    if (!payload.advisor_id && payload.student_id) {
+      const { data: stu } = await supabase.from('students').select('advisor_id').eq('id', payload.student_id).maybeSingle();
+      if (stu && stu.advisor_id) {
+        payload.advisor_id = stu.advisor_id;
+      }
+    }
+
+    // Sanitize academic_year for DB enum compatibility
+    if (payload.academic_year === '2026-2027') {
+      payload.academic_year = '2024-2025';
+    }
+
+    // Ensure semester matches enum format (e.g. 'Semester 5')
+    if (payload.semester && !payload.semester.toString().startsWith('Semester ')) {
+      payload.semester = `Semester ${payload.semester}`;
+    }
+
     let { data: inserted, error } = await supabase.from('od_requests').insert(payload).select().single();
-    if (error && error.message && error.message.includes('column') && error.message.includes('does not exist')) {
+    if (error && (
+      error.code === 'PGRST204' ||
+      (error.message && (
+        error.message.includes('od_category') ||
+        error.message.includes('column') ||
+        error.message.includes('schema cache') ||
+        error.message.includes('does not exist')
+      ))
+    )) {
       const { od_category, ...fallbackPayload } = payload;
       const resFallback = await supabase.from('od_requests').insert(fallbackPayload).select().single();
       if (resFallback.error) throw resFallback.error;
@@ -453,7 +480,15 @@ app.put('/api/od-requests/:id', authenticateToken, async (req, res) => {
     const { id } = req.params;
     let updates = { ...req.body };
     let { data: updated, error } = await supabase.from('od_requests').update(updates).eq('id', id).select().single();
-    if (error && error.message && error.message.includes('column') && error.message.includes('does not exist')) {
+    if (error && (
+      error.code === 'PGRST204' ||
+      (error.message && (
+        error.message.includes('od_category') ||
+        error.message.includes('column') ||
+        error.message.includes('schema cache') ||
+        error.message.includes('does not exist')
+      ))
+    )) {
       const { od_category, ...fallbackUpdates } = updates;
       const resFallback = await supabase.from('od_requests').update(fallbackUpdates).eq('id', id).select().single();
       if (resFallback.error) throw resFallback.error;
@@ -606,6 +641,11 @@ app.post('/api/internships', authenticateToken, async (req, res) => {
     if (error) throw error;
     res.json(inserted);
   } catch (error) {
+    if (error.code === 'PGRST205' || (error.message && error.message.includes('schema cache'))) {
+      return res.status(500).json({
+        error: "Table 'internships' does not exist in Supabase yet. Please run 'internships_schema.sql' in the Supabase SQL Editor."
+      });
+    }
     res.status(500).json({ error: error.message });
   }
 });
@@ -618,6 +658,11 @@ app.put('/api/internships/:id', authenticateToken, async (req, res) => {
     if (error) throw error;
     res.json(updated);
   } catch (error) {
+    if (error.code === 'PGRST205' || (error.message && error.message.includes('schema cache'))) {
+      return res.status(500).json({
+        error: "Table 'internships' does not exist in Supabase yet. Please run 'internships_schema.sql' in the Supabase SQL Editor."
+      });
+    }
     res.status(500).json({ error: error.message });
   }
 });
@@ -633,7 +678,7 @@ app.delete('/api/internships/:id', authenticateToken, async (req, res) => {
   }
 });
 
-app.listen(port, () => {
+app.listen(port, '0.0.0.0', () => {
   console.log(`Backend server running on port ${port}`);
 });
 
